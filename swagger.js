@@ -2,10 +2,12 @@ import swaggerAutogen from 'swagger-autogen'
 
 const doc = {
   info: {
-    version: '', // by default: '1.0.0'
-    title: '', // by default: 'REST API'
+    version: '0.0.0', // by default: '1.0.0'
+    title: 'Mindx Restaurant API', // by default: 'REST API'
     description: '' // by default: ''
   },
+  host: 'team1-tc24-server.onrender.com', // by default: 'localhost:3000'
+  basePath: '/', // by default: '/'
   servers: [
     {
       url: 'https://team1-tc24-server.onrender.com',
@@ -13,6 +15,9 @@ const doc = {
     }
     // { ... }
   ],
+  schemes: ['https'], // by default: ['http']
+  consumes: ['application/json'], // by default: ['application/json']
+  produces: ['application/json'], // by default: ['application/json']
   tags: [
     // by default: empty Array
     {
@@ -41,7 +46,23 @@ const doc = {
     }
     // { ... }
   ],
-  components: {} // by default: empty object
+  components: {
+    securitySchemes: {
+      BearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT'
+      }
+    }
+  }, // by default: empty object
+  secutiryDefinitions: {
+    Bearer: {
+      type: 'apiKey',
+      name: 'Authorization',
+      in: 'header'
+    }
+  },
+  definitions: {} // by default: empty object
 }
 
 const outputFile = './swagger-output.json'

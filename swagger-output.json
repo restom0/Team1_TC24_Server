@@ -1,11 +1,11 @@
 {
   "swagger": "2.0",
   "info": {
-    "version": "1.0.0",
-    "title": "REST API",
+    "version": "0.0.0",
+    "title": "Mindx Restaurant API",
     "description": ""
   },
-  "host": "localhost:3000",
+  "host": "team1-tc24-server.onrender.com",
   "servers": [
     {
       "url": "https://team1-tc24-server.onrender.com",
@@ -40,7 +40,13 @@
     }
   ],
   "schemes": [
-    "http"
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
   ],
   "paths": {
     "/logs/": {
@@ -576,6 +582,13 @@
           }
         }
       }
+    }
+  },
+  "secutiryDefinitions": {
+    "Bearer": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
     }
   }
 }
