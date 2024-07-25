@@ -52,6 +52,7 @@ app.use('/orders', OrderRouter)
 app.use('/menus', MenuRouter)
 app.use('/', UserRouter)
 
+console.log(process.env)
 const DB_CONNECTION_STR = DATABASE_CONFIG.MONGO_DATABASE || 'mongodb://localhost:27017/restaurant'
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
