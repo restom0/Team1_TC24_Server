@@ -10,7 +10,6 @@
     "lint": "eslint . --ext .js",
     "beautiful": "prettier --single-quote --trailing-comma all --semi false --write 'src/**/*.{js,json,scss}'",
     "swagger": "node ./swagger.js"
-
   },
   "keywords": [],
   "author": "",

@@ -15,8 +15,28 @@
   "basePath": "/",
   "tags": [
     {
-      "name": "",
-      "description": ""
+      "name": "User",
+      "description": "Endpoints"
+    },
+    {
+      "name": "Menu",
+      "description": "Endpoints"
+    },
+    {
+      "name": "Order",
+      "description": "Endpoints"
+    },
+    {
+      "name": "Restaurant",
+      "description": "Endpoints"
+    },
+    {
+      "name": "Table",
+      "description": "Endpoints"
+    },
+    {
+      "name": "Log",
+      "description": "Endpoints"
     }
   ],
   "schemes": [
@@ -25,6 +45,9 @@
   "paths": {
     "/logs/": {
       "get": {
+        "tags": [
+          "Log"
+        ],
         "description": "",
         "parameters": [
           {
@@ -47,6 +70,9 @@
     },
     "/restaurants/": {
       "get": {
+        "tags": [
+          "Restaurant"
+        ],
         "description": "",
         "parameters": [
           {
@@ -62,6 +88,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Restaurant"
+        ],
         "description": "",
         "parameters": [
           {
@@ -79,6 +108,9 @@
     },
     "/restaurants/{id}": {
       "get": {
+        "tags": [
+          "Restaurant"
+        ],
         "description": "",
         "parameters": [
           {
@@ -100,6 +132,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Restaurant"
+        ],
         "description": "",
         "parameters": [
           {
@@ -121,6 +156,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Restaurant"
+        ],
         "description": "",
         "parameters": [
           {
@@ -144,6 +182,9 @@
     },
     "/tables/": {
       "get": {
+        "tags": [
+          "Table"
+        ],
         "description": "",
         "parameters": [
           {
@@ -159,6 +200,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Table"
+        ],
         "description": "",
         "parameters": [
           {
@@ -176,6 +220,9 @@
     },
     "/tables/{id}": {
       "get": {
+        "tags": [
+          "Table"
+        ],
         "description": "",
         "parameters": [
           {
@@ -197,6 +244,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Table"
+        ],
         "description": "",
         "parameters": [
           {
@@ -218,6 +268,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Table"
+        ],
         "description": "",
         "parameters": [
           {
@@ -241,6 +294,9 @@
     },
     "/orders/": {
       "get": {
+        "tags": [
+          "Order"
+        ],
         "description": "",
         "parameters": [
           {
@@ -256,6 +312,9 @@
         }
       },
       "post": {
+        "tags": [
+          "Order"
+        ],
         "description": "",
         "parameters": [
           {
@@ -273,6 +332,9 @@
     },
     "/orders/{id}": {
       "get": {
+        "tags": [
+          "Order"
+        ],
         "description": "",
         "parameters": [
           {
@@ -294,6 +356,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Order"
+        ],
         "description": "",
         "parameters": [
           {
@@ -315,6 +380,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Order"
+        ],
         "description": "",
         "parameters": [
           {
@@ -338,6 +406,9 @@
     },
     "/menus/": {
       "post": {
+        "tags": [
+          "Menu"
+        ],
         "description": "",
         "parameters": [
           {
@@ -353,6 +424,9 @@
         }
       },
       "get": {
+        "tags": [
+          "Menu"
+        ],
         "description": "",
         "parameters": [
           {
@@ -373,6 +447,9 @@
     },
     "/menus/{id}": {
       "get": {
+        "tags": [
+          "Menu"
+        ],
         "description": "",
         "parameters": [
           {
@@ -400,6 +477,9 @@
         }
       },
       "put": {
+        "tags": [
+          "Menu"
+        ],
         "description": "",
         "parameters": [
           {
@@ -427,6 +507,9 @@
         }
       },
       "delete": {
+        "tags": [
+          "Menu"
+        ],
         "description": "",
         "parameters": [
           {
@@ -456,6 +539,9 @@
     },
     "/login": {
       "post": {
+        "tags": [
+          "User"
+        ],
         "description": "",
         "parameters": [
           {
@@ -473,6 +559,9 @@
     },
     "/register": {
       "post": {
+        "tags": [
+          "User"
+        ],
         "description": "",
         "parameters": [
           {

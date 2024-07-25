@@ -6,6 +6,7 @@ import { RestaurantService } from '../services/restaurant.service.js'
 import { CommonUtils } from '../utils/common.util.js'
 
 const getAllRestaurant = async (req, res) => {
+  // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getAllRestaurant()
     return new Response(200, 'Success', data).resposeHandler(res)
@@ -15,6 +16,7 @@ const getAllRestaurant = async (req, res) => {
 }
 
 const getRestaurantById = async (req, res) => {
+  // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getRestaurantById(req.params.id)
     return new Response(200, 'Success', data).resposeHandler(res)
@@ -24,6 +26,7 @@ const getRestaurantById = async (req, res) => {
 }
 
 const createRestaurant = async (req, res) => {
+  // #swagger.tags=['Restaurant']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Data is required')
@@ -36,6 +39,7 @@ const createRestaurant = async (req, res) => {
 }
 
 const updateRestaurant = async (req, res) => {
+  // #swagger.tags=['Restaurant']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Data is required')
@@ -48,6 +52,7 @@ const updateRestaurant = async (req, res) => {
 }
 
 const deleteRestaurant = async (req, res) => {
+  // #swagger.tags=['Restaurant']
   try {
     const result = await RestaurantService.deleteRestaurant(req.params.id)
     return new Response(HttpStatusCode.Accepted, 'Success', result).resposeHandler(res)

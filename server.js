@@ -19,9 +19,9 @@ import { logRequestMethod } from './src/middlewares/logRequestMethod.middleware.
 import { DATABASE_CONFIG } from './src/configs/database.config.js'
 import { requireApiKey } from './src/middlewares/useApiKey.middleware.js'
 import swaggerUi from 'swagger-ui-express'
-import swaggerJsdoc from 'swagger-jsdoc'
-import { SWAGGER_OPTION } from './src/configs/swagger.config.js'
+import swaggerDocument from './swagger-output.json' assert { type: 'json' }
 import MenuRouter from './src/routes/menu.route.js'
+import route from './src/routes/index.route.js'
 const app = express()
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
@@ -45,12 +45,7 @@ app.use(logRequestTime)
 app.use(logRequestMethod)
 app.use(cookieParser())
 
-app.use('/logs', requireApiKey, LogRouter)
-app.use('/restaurants', RestaurantRouter)
-app.use('/tables', TableRouter)
-app.use('/orders', OrderRouter)
-app.use('/menus', MenuRouter)
-app.use('/', UserRouter)
+route(app)
 
 const DB_CONNECTION_STR = DATABASE_CONFIG.MONGO_DATABASE || 'mongodb://localhost:27017/restaurant'
 const limiter = rateLimit({
@@ -59,8 +54,7 @@ const limiter = rateLimit({
   standardHeaders: 'draft-7',
   legacyHeaders: false
 })
-const specs = swaggerJsdoc(SWAGGER_OPTION)
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, { explorer: true }))
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
 const start = async () => {
   try {
     console.log('Start connecting...')

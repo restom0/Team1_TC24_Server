@@ -16,8 +16,28 @@ const doc = {
   tags: [
     // by default: empty Array
     {
-      name: '', // Tag name
-      description: '' // Tag description
+      name: 'User',
+      description: 'Endpoints'
+    },
+    {
+      name: 'Menu',
+      description: 'Endpoints'
+    },
+    {
+      name: 'Order',
+      description: 'Endpoints'
+    },
+    {
+      name: 'Restaurant',
+      description: 'Endpoints'
+    },
+    {
+      name: 'Table',
+      description: 'Endpoints'
+    },
+    {
+      name: 'Log',
+      description: 'Endpoints'
     }
     // { ... }
   ],
@@ -32,7 +52,7 @@ const routes = [
   // './src/routes/order.route.js',
   // './src/routes/user.route.js',
   // './src/routes/menu.route.js'
-  './server.js'
+  './src/routes/index.route.js'
 ]
 
 /* NOTE: If you are using the express Router, you must pass in the 'routes' only the 

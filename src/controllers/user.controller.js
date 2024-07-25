@@ -5,6 +5,7 @@ import { CommonUtils } from '../utils/common.util.js'
 
 const login = async (req, res, next) => {
   try {
+    // #swagger.tags=['User']
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Username is required')
     }
@@ -16,7 +17,7 @@ const login = async (req, res, next) => {
 }
 const register = async (req, res, next) => {
   try {
-    // console.log(req.body)
+    // #swagger.tags=['User']
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Username is required')
     }

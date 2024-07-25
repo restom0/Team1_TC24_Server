@@ -3,6 +3,7 @@ import { TableService } from '../services/table.service.js'
 import { CommonUtils } from '../utils/common.util.js'
 
 const getAllTable = async (req, res, next) => {
+  // #swagger.tags=['Table']
   try {
     const data = await TableService.getAllTable()
     return new Response(200, 'Success', data).resposeHandler(res)
@@ -12,6 +13,7 @@ const getAllTable = async (req, res, next) => {
 }
 
 const getTableById = async (req, res, next) => {
+  // #swagger.tags=['Table']
   try {
     const id = req.params.id
     const data = await TableService.getTableById(id)
@@ -22,6 +24,7 @@ const getTableById = async (req, res, next) => {
 }
 
 const createTable = async (req, res) => {
+  // #swagger.tags=['Table']
   try {
     const data = req.body
     if (CommonUtils.checkNullOrUndefined(data)) {
@@ -35,6 +38,7 @@ const createTable = async (req, res) => {
 }
 
 const updateTable = async (req, res) => {
+  // #swagger.tags=['Table']
   try {
     const id = req.params.id
     const data = req.body
@@ -49,6 +53,7 @@ const updateTable = async (req, res) => {
 }
 
 const deleteTable = async (req, res) => {
+  // #swagger.tags=['Table']
   try {
     const id = req.params.id
     const result = await TableService.deleteTable(id)

@@ -1,8 +1,8 @@
 import { Response } from '../dto/response/response.js'
 import MenuItem from '../models/menus.model.js'
 
-
 const createMenuItem = async (req, res) => {
+  // #swagger.tags=['Menu']
   try {
     const newItem = new MenuItem(req.body)
     await newItem.save()
@@ -13,6 +13,7 @@ const createMenuItem = async (req, res) => {
 }
 
 const getAllMenuItems = async (req, res) => {
+  // #swagger.tags=['Menu']
   try {
     const items = await MenuItem.find()
     res.status(200).json(items)
@@ -22,6 +23,7 @@ const getAllMenuItems = async (req, res) => {
 }
 
 const getMenuItemById = async (req, res) => {
+  // #swagger.tags=['Menu']
   try {
     const item = await MenuItem.findById(req.params.id)
     if (!item) return res.status(404).json({ message: 'Item not found' })
@@ -32,6 +34,7 @@ const getMenuItemById = async (req, res) => {
 }
 
 const updateMenuItemById = async (req, res) => {
+  // #swagger.tags=['Menu']
   try {
     const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -45,6 +48,7 @@ const updateMenuItemById = async (req, res) => {
 }
 
 const deleteMenuItemById = async (req, res) => {
+  // #swagger.tags=['Menu']
   try {
     const item = await MenuItem.findByIdAndDelete(req.params.id)
     if (!item) return res.status(404).json({ message: 'Item not found' })

@@ -5,6 +5,7 @@ import { OrderService } from '../services/order.service.js'
 import { CommonUtils } from '../utils/common.util.js'
 
 const getAllOrder = async (req, res) => {
+  // #swagger.tags=['Order']
   try {
     const data = await OrderService.getAllOrder()
     return new Response(200, 'success', data).resposeHandler(res)
@@ -14,6 +15,7 @@ const getAllOrder = async (req, res) => {
 }
 
 const getOrderById = async (req, res) => {
+  // #swagger.tags=['Order']
   try {
     const data = await OrderService.getOrderById(req.params.id)
     return new Response(HttpStatusCode.Ok, 'success', data).resposeHandler(res)
@@ -23,6 +25,7 @@ const getOrderById = async (req, res) => {
 }
 
 const createOrder = async (req, res) => {
+  // #swagger.tags=['Order']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Data is required')
@@ -35,6 +38,7 @@ const createOrder = async (req, res) => {
 }
 
 const updateOrder = async (req, res) => {
+  // #swagger.tags=['Order']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Data is required')
@@ -47,6 +51,7 @@ const updateOrder = async (req, res) => {
 }
 
 const deleteOrder = async (req, res) => {
+  // #swagger.tags=['Order']
   try {
     const result = await OrderService.deleteOrder(req.params.id)
     return new Response(200, 'success', result).resposeHandler(res)
