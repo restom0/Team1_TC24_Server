@@ -8,9 +8,10 @@ const login = async (req, res, next) => {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Username is required')
     }
-    const result = await UserService.login(...req.body)
-    new Response(200, 'Login success', result).resposeHandler(res)
+    const result = await UserService.login(req.body)
+    new Response(200, 'Đăng nhập thành công', result).resposeHandler(res)
   } catch (error) {
+    console.log(error)
     new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
