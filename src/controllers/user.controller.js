@@ -9,9 +9,9 @@ const login = async (req, res, next) => {
       throw new BadRequestError('Username is required')
     }
     const result = await UserService.login(...req.body)
-    Response(200, 'Login success', result).resposeHandler(res)
+    new Response(200, 'Login success', result).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 const register = async (req, res, next) => {

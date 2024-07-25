@@ -8,7 +8,7 @@ import { CommonUtils } from '../utils/common.util.js'
 const getAllRestaurant = async (req, res) => {
   try {
     const data = await RestaurantService.getAllRestaurant()
-    Response(200, 'Success', data).resposeHandler(res)
+    new Response(200, 'Success', data).resposeHandler(res)
   } catch (error) {
     res.status(error.statusCode).json({ error: error.message })
   }
@@ -17,9 +17,9 @@ const getAllRestaurant = async (req, res) => {
 const getRestaurantById = async (req, res) => {
   try {
     const data = await RestaurantService.getRestaurantById(req.params.id)
-    Response(200, 'Success', data).resposeHandler(res)
+    new Response(200, 'Success', data).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
@@ -29,9 +29,9 @@ const createRestaurant = async (req, res) => {
       throw new BadRequestError('Data is required')
     }
     const result = await RestaurantService.createRestaurant(...req.body)
-    Response(201, 'Success', result).resposeHandler(res)
+    new Response(201, 'Success', result).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
@@ -41,18 +41,18 @@ const updateRestaurant = async (req, res) => {
       throw new BadRequestError('Data is required')
     }
     const result = await RestaurantService.updateRestaurant(req.params.id, ...req.body)
-    Response(200, 'Success', result).resposeHandler(res)
+    new Response(200, 'Success', result).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
 const deleteRestaurant = async (req, res) => {
   try {
     const result = await RestaurantService.deleteRestaurant(req.params.id)
-    Response(HttpStatusCode.Accepted, 'Success', result).resposeHandler(res)
+    new Response(HttpStatusCode.Accepted, 'Success', result).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 

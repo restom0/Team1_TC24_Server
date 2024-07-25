@@ -28,7 +28,7 @@ app.use(bodyParser.json())
 // const server = createServer(app)
 // const io = new Server(server)
 
-const port = 3000
+const port = process.env.PORT || 7000
 app.use(
   cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],

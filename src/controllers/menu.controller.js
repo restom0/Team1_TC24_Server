@@ -6,7 +6,7 @@ const createMenuItem = async (req, res) => {
   try {
     const newItem = new MenuItem(req.body)
     await newItem.save()
-    Response(201, 'Item created', newItem).resposeHandler(res)
+    new Response(201, 'Item created', newItem).resposeHandler(res)
   } catch (error) {
     res.status(400).json({ message: error.message })
   }
