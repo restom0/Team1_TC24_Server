@@ -6,9 +6,9 @@ const getDataOnDate = async (req, res, next) => {
   try {
     const { date } = req.query
     const data = await LogService.getDataOnDate(date, req.user.id)
-    new Response(HttpStatusCode.Ok, 'Success', data).responseHandler(res)
+    return new Response(HttpStatusCode.Ok, 'Success', data).resposeHandler(res)
   } catch (error) {
-    new Response(error.statusCode, error.message, error).responseHandler(res)
+    return new Response(error.statusCode, error.message, error).resposeHandler(res)
   }
 }
 

@@ -5,9 +5,9 @@ import { CommonUtils } from '../utils/common.util.js'
 const getAllTable = async (req, res, next) => {
   try {
     const data = await TableService.getAllTable()
-    new Response(200, 'Success', data).resposeHandler(res)
+    return new Response(200, 'Success', data).resposeHandler(res)
   } catch (error) {
-    new Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
@@ -15,9 +15,9 @@ const getTableById = async (req, res, next) => {
   try {
     const id = req.params.id
     const data = await TableService.getTableById(id)
-    new Response(200, 'Success', data).resposeHandler(res)
+    return new Response(200, 'Success', data).resposeHandler(res)
   } catch (error) {
-    new Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
@@ -28,9 +28,9 @@ const createTable = async (req, res) => {
       throw new BadRequestError('Data is required')
     }
     const result = await TableService.createTable(data)
-    Response(201, 'Success', result).resposeHandler(res)
+    return new Response(201, 'Success', result).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
@@ -42,9 +42,9 @@ const updateTable = async (req, res) => {
       throw new BadRequestError('Data is required')
     }
     const result = await TableService.updateTable(id, data)
-    Response(200, 'Success', result).resposeHandler(res)
+    return new Response(200, 'Success', result).resposeHandler(res)
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
 
