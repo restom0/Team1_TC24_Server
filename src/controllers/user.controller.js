@@ -11,7 +11,6 @@ const login = async (req, res, next) => {
     const result = await UserService.login(req.body)
     new Response(200, 'Đăng nhập thành công', result).resposeHandler(res)
   } catch (error) {
-    console.log(error)
     new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
