@@ -78,7 +78,7 @@ const createRestaurant = async (
     public_id_slider3,
     public_id_slider4
   })
-  if (!CommonUtils.checkNullOrUndefined(restaurant)) {
+  if (restaurant.length > 0) {
     throw new NotFoundError('Restaurant already exists')
   }
   return RestaurantDto(
