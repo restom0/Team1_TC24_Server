@@ -595,6 +595,26 @@
         }
       }
     },
+    "/stats/users": {
+      "get": {
+        "tags": [
+          "Stat"
+        ],
+        "description": "",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
     "/login": {
       "post": {
         "tags": [
