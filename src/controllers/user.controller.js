@@ -12,19 +12,26 @@ const login = async (req, res, next) => {
     const result = await UserService.login(req.body)
     return new Response(200, 'Đăng nhập thành công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
+
 const register = async (req, res, next) => {
   try {
     // #swagger.tags=['User']
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Username is required')
     }
-    await UserService.register(req.body)
-    return new Response(201, 'Register success', null).resposeHandler(res)
+    const result = await UserService.register(req.body)
+    return new Response(200, 'Đăng ký thành công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(500, error._message, error.errors).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 

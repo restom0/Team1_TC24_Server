@@ -8,7 +8,6 @@ const Restaurant = new Schema(
     // latitude: { type: String, required: true },
     // longitude: { type: String, required: true },
     address: { type: String, required: true },
-    menu_id: { type: [ObjectId], refs: 'Menus', required: true },
     openTime: { type: String, required: true },
     closeTime: { type: String, required: true },
     description: { type: String, required: true },
