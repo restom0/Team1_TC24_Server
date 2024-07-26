@@ -18,7 +18,7 @@ const getAllMenuItems = async (req, res) => {
     const items = await MenuItem.aggregate([
       {
         $lookup: {
-          from: 'Restaurants',
+          from: 'restaurants',
           localField: 'restaurant_id',
           foreignField: '_id',
           as: 'restaurant'
@@ -43,7 +43,7 @@ const getMenuItemById = async (req, res) => {
       },
       {
         $lookup: {
-          from: 'Restaurants',
+          from: 'restaurants',
           localField: 'restaurant_id',
           foreignField: '_id',
           as: 'restaurant'
