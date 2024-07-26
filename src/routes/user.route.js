@@ -7,4 +7,8 @@ const UserRouter = express.Router()
 UserRouter.post('/login', UserLoginValidation, handleValidationErrors, UserController.login)
 UserRouter.post('/register', UserRegisterValidation, handleValidationErrors, UserController.register)
 UserRouter.post('/mail', UserController.sendMail)
+UserRouter.post('/registerStaff', UserRegisterValidation, handleValidationErrors, UserController.registerStaff)
+UserRouter.get('/:id', UserController.getUserById)
+UserRouter.get('/', UserController.getAllUsers)
+UserRouter.delete('/:id', UserController.deleteUser)
 export { UserRouter }

@@ -29,6 +29,22 @@ const register = async ({ username, password, phone, email, name }) => {
   })
   return await user.save()
 }
+const registerStaff = async ({ username, password, phone, email, name }) => {
+  if (await UserModel.findOne({ username })) {
+    throw new BadRequestError('Account existed')
+  }
+  const user = new UserModel({
+    _id: new Types.ObjectId(),
+    username,
+    password,
+    phone,
+    email,
+    name,
+    role: USER_ROLE.STAFF,
+    salt: createApiKey(Math.random().toString(36).substring(2))
+  })
+  return await user.save()
+}
 const authorize = async (id) => {
   id = Types.ObjectId.createFromHexString(id)
   return await UserModel.findById(id)
@@ -37,4 +53,19 @@ const authorize = async (id) => {
 const countUser = async () => {
   return await UserModel.countDocuments({ deleted_at: null })
 }
-export const UserService = { login, register, authorize, countUser }
+
+const getUserById = async (id) => {
+  id = Types.ObjectId.createFromHexString(id)
+  return await UserModel.findById(id)
+}
+
+const getAllUsers = async () => {
+  return await UserModel.find().exec()
+}
+
+const deleteUser = async (id) => {
+  id = Types.ObjectId.createFromHexString(id)
+  return await UserModel.findByIdAndDelete(id)
+}
+
+export const UserService = { login, register, authorize, getUserById, getAllUsers, deleteUser, registerStaff }

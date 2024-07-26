@@ -46,4 +46,40 @@ const sendMail = async (req, res, next) => {
     next(error)
   }
 }
-export const UserController = { login, register, sendMail }
+
+const getUserById = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const user = await UserService.getUserById(id)
+    if (!user) {
+      throw new BadRequestError('User not found')
+    }
+    new Response(200, 'User fetched successfully', user).resposeHandler(res)
+  } catch (error) {
+    new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+  }
+}
+
+const getAllUsers = async (req, res, next) => {
+  try {
+    const users = await UserService.getAllUsers()
+    new Response(200, 'Users fetched successfully', users).resposeHandler(res)
+  } catch (error) {
+    new Response(500, error.message, null).resposeHandler(res)
+  }
+}
+
+const deleteUser = async (req, res, next) => {
+  try {
+    const { id } = req.params
+    const user = await UserService.deleteUser(id)
+    if (!user) {
+      throw new BadRequestError('User not found')
+    }
+    new Response(200, 'User deleted successfully', null).resposeHandler(res)
+  } catch (error) {
+    new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+  }
+}
+
+export const UserController = { login, register, getUserById, getAllUsers, deleteUser, registerStaff }
