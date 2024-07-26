@@ -3,18 +3,20 @@ import { PAYMENT_STATUS } from '../../constants/payment_status.constant.js'
 import { PAYMENT_METHOD } from '../../constants/payment_method.constant.js'
 const OrderGetAllValidation = []
 const OrderGetByIdValidation = [
-  param('id').notEmpty().withMessage('Thiếu id').isString().withMessage('Id phải là chuỗi')
+  param('id').trim().notEmpty().withMessage('Thiếu id').isString().withMessage('Id phải là chuỗi')
 ]
 const OrderCreateValidation = [
-  body('tableId').notEmpty().withMessage('Thiếu tableId').isArray().withMessage('tableId phải là mảng'),
-  body('tableId.*').notEmpty().withMessage('Thiếu tableId').isMongoId().withMessage('tableId không hợp lệ'),
-  body('name').notEmpty().withMessage('Thiếu tên').isString().withMessage('Tên phải là chuỗi'),
+  body('tableId').trim().notEmpty().withMessage('Thiếu tableId').isArray().withMessage('tableId phải là mảng'),
+  body('tableId.*').trim().notEmpty().withMessage('Thiếu tableId').isMongoId().withMessage('tableId không hợp lệ'),
+  body('name').trim().notEmpty().withMessage('Thiếu tên').isString().withMessage('Tên phải là chuỗi'),
   body('phone_number')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu số điện thoại')
     .isMobilePhone('vi-VN')
     .withMessage('Số điện thoại không hợp lệ'),
   body('payment')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu hình thức thanh toán')
     .isString()
@@ -23,9 +25,10 @@ const OrderCreateValidation = [
       return PAYMENT_METHOD.includes(value)
     })
     .withMessage('Hình thức thanh toán không hợp lệ'),
-  body('menu').notEmpty().withMessage('Thiếu menu').isArray().withMessage('menu phải là mảng'),
-  body('menu.*').notEmpty().withMessage('Thiếu menu').isMongoId().withMessage('menu không hợp lệ'),
+  body('menu').trim().notEmpty().withMessage('Thiếu menu').isArray().withMessage('menu phải là mảng'),
+  body('menu.*').trim().notEmpty().withMessage('Thiếu menu').isMongoId().withMessage('menu không hợp lệ'),
   body('status')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu trạng thái')
     .isString()
@@ -35,6 +38,7 @@ const OrderCreateValidation = [
     })
     .withMessage('Trạng thái không hợp lệ'),
   body('checkin')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu ngày checkin')
     .isDate()
@@ -44,16 +48,18 @@ const OrderCreateValidation = [
 ]
 
 const OrderUpdateValidation = [
-  param('id').notEmpty().withMessage('Thiếu id').isMongoId().withMessage('Id không hợp lệ'),
-  body('tableId').notEmpty().withMessage('Thiếu tableId').isArray().withMessage('tableId phải là mảng'),
-  body('tableId.*').notEmpty().withMessage('Thiếu tableId').isMongoId().withMessage('tableId không hợp lệ'),
-  body('name').notEmpty().withMessage('Thiếu tên').isString().withMessage('Tên phải là chuỗi'),
+  param('id').trim().notEmpty().withMessage('Thiếu id').isMongoId().withMessage('Id không hợp lệ'),
+  body('tableId').trim().notEmpty().withMessage('Thiếu tableId').isArray().withMessage('tableId phải là mảng'),
+  body('tableId.*').trim().notEmpty().withMessage('Thiếu tableId').isMongoId().withMessage('tableId không hợp lệ'),
+  body('name').trim().notEmpty().withMessage('Thiếu tên').isString().withMessage('Tên phải là chuỗi'),
   body('phone_number')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu số điện thoại')
     .isMobilePhone('vi-VN')
     .withMessage('Số điện thoại không hợp lệ'),
   body('payment')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu hình thức thanh toán')
     .isString()
@@ -62,9 +68,10 @@ const OrderUpdateValidation = [
       return PAYMENT_METHOD.includes(value)
     })
     .withMessage('Hình thức thanh toán không hợp lệ'),
-  body('menu').notEmpty().withMessage('Thiếu menu').isArray().withMessage('menu phải là mảng'),
-  body('menu.*').notEmpty().withMessage('Thiếu menu').isMongoId().withMessage('menu không hợp lệ'),
+  body('menu').trim().notEmpty().withMessage('Thiếu menu').isArray().withMessage('menu phải là mảng'),
+  body('menu.*').trim().notEmpty().withMessage('Thiếu menu').isMongoId().withMessage('menu không hợp lệ'),
   body('status')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu trạng thái')
     .isString()
@@ -74,6 +81,7 @@ const OrderUpdateValidation = [
     })
     .withMessage('Trạng thái không hợp lệ'),
   body('checkin')
+    .trim()
     .notEmpty()
     .withMessage('Thiếu ngày checkin')
     .isDate()
@@ -82,7 +90,7 @@ const OrderUpdateValidation = [
     .withMessage('Ngày checkin không hợp lệ')
 ]
 const OrderDeleteValidation = [
-  param('id').notEmpty().withMessage('Thiếu id').isMongoId().withMessage('Id phải là chuỗi')
+  param('id').trim().notEmpty().withMessage('Thiếu id').isMongoId().withMessage('Id phải là chuỗi')
 ]
 export {
   OrderGetAllValidation,
