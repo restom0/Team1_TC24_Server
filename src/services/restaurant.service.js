@@ -3,14 +3,9 @@ import { CommonUtils } from '../utils/common.util.js'
 import { NotFoundError } from '../errors/notFound.error.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
 import mongoose from 'mongoose'
-import { RestaurantDto } from '../dto/response/restaurant.dto.js'
+import RestaurantDto from '../dto/response/restaurant.dto.js'
 import { GOOGLE_CONFIG } from '../configs/google.config.js'
-// name: { type: String, required: true },
-//     address: { type: String, required: true },
-//     openTime: { type: Number, required: true },
-//     closeTime: { type: Number, required: true },
-//     description: { type: String, required: true },
-//     imageUrls: { type: String, required: true },
+
 const getAllRestaurant = async () => {
   const restaurants = await RestaurantModel.find({ deletedAt: null })
   return restaurants.map((restaurant) => new RestaurantDto(restaurant))
@@ -21,7 +16,6 @@ const getRestaurantById = async (id) => {
 
 const getLatLngFromAddress = async (address) => {
   try {
-    console.log(GOOGLE_CONFIG.GOOGLE_API_KEY)
     const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
       params: {
         address,
@@ -49,29 +43,51 @@ const getLatLngFromAddress = async (address) => {
 
 const createRestaurant = async (
   id,
-  { name, address, openTime, closeTime, description, imageUrls, slider1, slider2, slider3, slider4 }
-) => {
-  const { latitude, longitude } = await getLatLngFromAddress(address)
-  const restaurant = await RestaurantModel.find({
+  {
     name,
     address,
-    latitude,
-    longitude,
     openTime,
     closeTime,
     description,
     imageUrls,
-    deletedAt: null
+    slider1,
+    slider2,
+    slider3,
+    slider4,
+    public_id_avatar,
+    public_id_slider1,
+    public_id_slider2,
+    public_id_slider3,
+    public_id_slider4
+  }
+) => {
+  // const { latitude, longitude } = await getLatLngFromAddress(address)
+  const restaurant = await RestaurantModel.find({
+    name,
+    address,
+    // latitude,
+    // longitude,
+    openTime,
+    closeTime,
+    description,
+    imageUrls,
+    deletedAt: null,
+    public_id_avatar,
+    public_id_slider1,
+    public_id_slider2,
+    public_id_slider3,
+    public_id_slider4
   })
-  if (!CommonUtils.checkNullOrUndefined(restaurant)) {
+  if (restaurant.length > 0) {
     throw new NotFoundError('Restaurant already exists')
   }
-  return RestaurantDto(
+  return new RestaurantDto(
     await RestaurantModel.create({
+      _id: new mongoose.Types.ObjectId(),
       name,
       address,
-      latitude,
-      longitude,
+      // latitude,
+      // longitude,
       openTime,
       closeTime,
       menu_id: [],
@@ -81,26 +97,45 @@ const createRestaurant = async (
       slider2,
       slider3,
       slider4,
-      owner_id: mongoose.Types.ObjectId(id)
+      public_id_avatar,
+      public_id_slider1,
+      public_id_slider2,
+      public_id_slider3,
+      public_id_slider4,
+      owner_id: new mongoose.Types.ObjectId(id.toString())
     })
   )
 }
 
 const updateRestaurant = async (
   id,
-  { name, address, openTime, closeTime, description, imageUrls, slider1, slider2, slider3, slider4 }
+  {
+    name,
+    address,
+    openTime,
+    closeTime,
+    description,
+    imageUrls,
+    slider1,
+    slider2,
+    slider3,
+    slider4,
+    public_id_avatar,
+    public_id_slider1,
+    public_id_slider2,
+    public_id_slider3,
+    public_id_slider4
+  }
 ) => {
-  const { latitude, longitude } = await getLatLngFromAddress(address)
   const restaurant = await RestaurantModel.findById(id, { deletedAt: null })
-  if (CommonUtils.checkNullOrUndefined(restaurant)) {
+  if (restaurant.length === 0) {
     throw new NotFoundError('Restaurant not found')
   }
   return await RestaurantModel.updateOne(
     { _id: mongoose.Types.ObjectId(id) },
     {
       name,
-      latitude,
-      longitude,
+      address,
       openTime,
       closeTime,
       description,
@@ -109,6 +144,11 @@ const updateRestaurant = async (
       slider2,
       slider3,
       slider4,
+      public_id_avatar,
+      public_id_slider1,
+      public_id_slider2,
+      public_id_slider3,
+      public_id_slider4,
       updatedAt: Date.now()
     }
   )
