@@ -37,4 +37,4 @@ const authorize = async (id) => {
 const countUser = async () => {
   return await UserModel.countDocuments({ deleted_at: null })
 }
-export const UserService = { login, register, authorize }
+export const UserService = { login, register, authorize, countUser }

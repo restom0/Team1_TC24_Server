@@ -15,7 +15,19 @@ const createMenuItem = async (req, res) => {
 const getAllMenuItems = async (req, res) => {
   // #swagger.tags=['Menu']
   try {
-    const items = await MenuItem.find()
+    const items = await MenuItem.aggregate([
+      {
+        $lookup: {
+          from: 'Restaurants',
+          localField: 'restaurant_id',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      }
+    ])
     res.status(200).json(items)
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -25,7 +37,22 @@ const getAllMenuItems = async (req, res) => {
 const getMenuItemById = async (req, res) => {
   // #swagger.tags=['Menu']
   try {
-    const item = await MenuItem.findById(req.params.id)
+    const item = await MenuItem.aggregate([
+      {
+        $match: { _id: req.params.id }
+      },
+      {
+        $lookup: {
+          from: 'Restaurants',
+          localField: 'restaurant_id',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      }
+    ])
     if (!item) return res.status(404).json({ message: 'Item not found' })
     res.status(200).json(item)
   } catch (error) {
