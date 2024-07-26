@@ -11,7 +11,7 @@ const getAllRestaurant = async (req, res) => {
     const data = await RestaurantService.getAllRestaurant()
     return new Response(200, 'Success', data).resposeHandler(res)
   } catch (error) {
-    res.status(error.statusCode).json({ error: error.message })
+    return new Response(500, error.message, null).resposeHandler(res)
   }
 }
 
@@ -31,10 +31,10 @@ const createRestaurant = async (req, res) => {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Data is required')
     }
-    const result = await RestaurantService.createRestaurant(...req.body)
+    const result = await RestaurantService.createRestaurant(req.user.id, req.body)
     return new Response(201, 'Success', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(500, error.message, null).resposeHandler(res)
   }
 }
 
@@ -44,7 +44,7 @@ const updateRestaurant = async (req, res) => {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Data is required')
     }
-    const result = await RestaurantService.updateRestaurant(req.params.id, ...req.body)
+    const result = await RestaurantService.updateRestaurant(req.params.id, req.body)
     return new Response(200, 'Success', result).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
@@ -61,10 +61,31 @@ const deleteRestaurant = async (req, res) => {
   }
 }
 
+const getFourNearestRestaurant = async (req, res) => {
+  // #swagger.tags=['Restaurant']
+  try {
+    const data = await RestaurantService.getFourNearestRestaurant(req.query)
+    return new Response(200, 'Success', data).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+  }
+}
+
+const getDistanceFromRestaurant = async (req, res) => {
+  // #swagger.tags=['Restaurant']
+  try {
+    const data = await RestaurantService.getDistanceFromRestaurant(req.query)
+    return new Response(200, 'Success', data).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+  }
+}
+
 export const RestaurantController = {
   getAllRestaurant,
   getRestaurantById,
   createRestaurant,
   updateRestaurant,
-  deleteRestaurant
+  deleteRestaurant,
+  getFourNearestRestaurant
 }

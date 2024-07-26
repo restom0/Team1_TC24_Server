@@ -22,6 +22,7 @@ import swaggerUi from 'swagger-ui-express'
 import swaggerDocument from './swagger-output.json' assert { type: 'json' }
 import MenuRouter from './src/routes/menu.route.js'
 import route from './src/routes/index.route.js'
+import { payOS } from './src/configs/payos.config.js'
 const app = express()
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
@@ -55,6 +56,7 @@ const limiter = rateLimit({
   legacyHeaders: false
 })
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument))
+
 const start = async () => {
   try {
     console.log('Start connecting...')

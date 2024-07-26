@@ -79,11 +79,9 @@ const createTable = async ({ tableNumber, restaurantID }) => {
   return await TableModel.create({ tableNumber, status: true, restaurantID })
 }
 
-const updateTable = async (id, { tableNumber, status, restaurantID }) => {
+const updateTable = async (id, { tableNumber }) => {
   return await TableModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), {
     tableNumber,
-    status,
-    restaurantID,
     updatedAt: Date.now()
   })
 }

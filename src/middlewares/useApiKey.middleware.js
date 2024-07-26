@@ -38,7 +38,7 @@ export const requireApiKey = async (req, res, next) => {
       }
     })
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode, error.message, null).responseHandler(res)
   }
 }
 
@@ -51,11 +51,11 @@ export const authentication = async (req, res, next) => {
     ) {
       throw new UnAuthorizedError('Invalid access')
     }
-    if (req.user.role !== 'ADMIN') {
+    if (req.user.role !== 'RESTAURANT_OWNER') {
       throw new ForbiddenRequestError('Invalid access')
     }
     next()
   } catch (error) {
-    Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode, error.message, null).responseHandler(res)
   }
 }

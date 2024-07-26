@@ -4,6 +4,7 @@ import { NotFoundError } from '../errors/notFound.error.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
 import mongoose from 'mongoose'
 import { RestaurantDto } from '../dto/response/restaurant.dto.js'
+import { GOOGLE_CONFIG } from '../configs/google.config.js'
 // name: { type: String, required: true },
 //     address: { type: String, required: true },
 //     openTime: { type: Number, required: true },
@@ -11,16 +12,51 @@ import { RestaurantDto } from '../dto/response/restaurant.dto.js'
 //     description: { type: String, required: true },
 //     imageUrls: { type: String, required: true },
 const getAllRestaurant = async () => {
-  return RestaurantDto(await RestaurantModel.find({ deletedAt: null }))
+  const restaurants = await RestaurantModel.find({ deletedAt: null })
+  return restaurants.map((restaurant) => new RestaurantDto(restaurant))
 }
 const getRestaurantById = async (id) => {
-  return RestaurantDto(await RestaurantModel.findById(id, { deletedAt: null }))
+  return new RestaurantDto(await RestaurantModel.findById(id, { deletedAt: null }))
 }
 
-const createRestaurant = async ({ name, address, openTime, closeTime, description, imageUrls }) => {
+const getLatLngFromAddress = async (address) => {
+  try {
+    console.log(GOOGLE_CONFIG.GOOGLE_API_KEY)
+    const response = await axios.get('https://maps.googleapis.com/maps/api/geocode/json', {
+      params: {
+        address,
+        key: GOOGLE_CONFIG.GOOGLE_API_KEY
+      }
+    })
+
+    if (response.data.status === 'OK') {
+      const location = response.data.results[0].geometry.location
+      return {
+        latitude: location.lat,
+        longitude: location.lng
+      }
+    } else if (response.data.status === 'REQUEST_DENIED') {
+      console.log(response.data)
+      throw new Error('Geocoding API request denied. Please check your API key and permissions.')
+    } else {
+      throw new Error(`Geocoding API error: ${response.data.status}`)
+    }
+  } catch (error) {
+    console.error('Error fetching geocode:', error.message)
+    throw error
+  }
+}
+
+const createRestaurant = async (
+  id,
+  { name, address, openTime, closeTime, description, imageUrls, slider1, slider2, slider3, slider4 }
+) => {
+  const { latitude, longitude } = await getLatLngFromAddress(address)
   const restaurant = await RestaurantModel.find({
     name,
     address,
+    latitude,
+    longitude,
     openTime,
     closeTime,
     description,
@@ -30,17 +66,51 @@ const createRestaurant = async ({ name, address, openTime, closeTime, descriptio
   if (!CommonUtils.checkNullOrUndefined(restaurant)) {
     throw new NotFoundError('Restaurant already exists')
   }
-  return RestaurantDto(await RestaurantModel.create({ name, address, openTime, closeTime, description, imageUrls }))
+  return RestaurantDto(
+    await RestaurantModel.create({
+      name,
+      address,
+      latitude,
+      longitude,
+      openTime,
+      closeTime,
+      menu_id: [],
+      description,
+      imageUrls,
+      slider1,
+      slider2,
+      slider3,
+      slider4,
+      owner_id: mongoose.Types.ObjectId(id)
+    })
+  )
 }
 
-const updateRestaurant = async (id, { name, address, openTime, closeTime, description, imageUrls }) => {
+const updateRestaurant = async (
+  id,
+  { name, address, openTime, closeTime, description, imageUrls, slider1, slider2, slider3, slider4 }
+) => {
+  const { latitude, longitude } = await getLatLngFromAddress(address)
   const restaurant = await RestaurantModel.findById(id, { deletedAt: null })
   if (CommonUtils.checkNullOrUndefined(restaurant)) {
     throw new NotFoundError('Restaurant not found')
   }
   return await RestaurantModel.updateOne(
     { _id: mongoose.Types.ObjectId(id) },
-    { name, address, openTime, closeTime, description, imageUrls }
+    {
+      name,
+      latitude,
+      longitude,
+      openTime,
+      closeTime,
+      description,
+      imageUrls,
+      slider1,
+      slider2,
+      slider3,
+      slider4,
+      updatedAt: Date.now()
+    }
   )
 }
 
@@ -53,12 +123,39 @@ const deleteRestaurant = async (id) => {
 }
 
 const calculateDistance = async (origin, destination) => {
-  const distance = await axios.get(`https://maps.googleapis.com/maps/api/distancematrix/json
-  ?destinations=New%20York%20City%2C%20NY
-  &origins=Washington%2C%20DC
-  &units=imperial
-  &key=YOUR_API_KEY`)
-  return 0
+  try {
+    const response = await axios.get('https://maps.googleapis.com/maps/api/distancematrix/json', {
+      params: {
+        origins: origin,
+        destinations: destination,
+        units: 'metric',
+        key: GOOGLE_CONFIG.GOOGLE_API_KEY
+      }
+    })
+
+    const distance = response.data.rows[0].elements[0].distance.text
+    return distance
+  } catch (error) {
+    console.error('Error calculating distance:', error)
+    throw error
+  }
+}
+const getFourNearestRestaurant = async (latitude, longitude) => {
+  const restaurants = await RestaurantModel.find({ deletedAt: null })
+  const restaurantWithDistance = []
+  for (const restaurant of restaurants) {
+    const distance = await calculateDistance(
+      `${latitude},${longitude}`,
+      `${restaurant.latitude},${restaurant.longitude}`
+    )
+    restaurantWithDistance.push({ ...restaurant._doc, distance })
+  }
+  return restaurantWithDistance
+}
+
+const getDistanceFromRestaurant = async (restaurantId, latitude, longitude) => {
+  const restaurant = await RestaurantModel.findById(restaurantId)
+  return await calculateDistance(`${latitude},${longitude}`, `${restaurant.latitude},${restaurant.longitude}`)
 }
 export const RestaurantService = {
   getAllRestaurant,
@@ -66,5 +163,6 @@ export const RestaurantService = {
   createRestaurant,
   updateRestaurant,
   deleteRestaurant,
-  calculateDistance
+  getFourNearestRestaurant,
+  getDistanceFromRestaurant
 }
