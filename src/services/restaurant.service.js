@@ -83,6 +83,7 @@ const createRestaurant = async (
   }
   return RestaurantDto(
     await RestaurantModel.create({
+      _id: new mongoose.Types.ObjectId(),
       name,
       address,
       // latitude,
