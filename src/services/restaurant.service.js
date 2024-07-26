@@ -81,7 +81,7 @@ const createRestaurant = async (
   if (restaurant.length > 0) {
     throw new NotFoundError('Restaurant already exists')
   }
-  return RestaurantDto(
+  return new RestaurantDto(
     await RestaurantModel.create({
       _id: new mongoose.Types.ObjectId(),
       name,
