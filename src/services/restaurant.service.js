@@ -101,7 +101,7 @@ const createRestaurant = async (
       public_id_slider2,
       public_id_slider3,
       public_id_slider4,
-      owner_id: mongoose.Types.ObjectId(id)
+      owner_id: new mongoose.Types.ObjectId(id)
     })
   )
 }
