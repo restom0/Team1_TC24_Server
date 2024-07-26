@@ -34,4 +34,8 @@ const authorize = async (id) => {
   id = Types.ObjectId.createFromHexString(id)
   return await UserModel.findById(id)
 }
+
+const countUser = async () => {
+  return await UserModel.countDocuments({ deleted_at: null })
+}
 export const UserService = { login, register, authorize }
