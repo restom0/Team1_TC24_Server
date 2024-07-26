@@ -85,8 +85,8 @@ const createRestaurant = async (
     await RestaurantModel.create({
       name,
       address,
-      latitude,
-      longitude,
+      // latitude,
+      // longitude,
       openTime,
       closeTime,
       menu_id: [],
@@ -126,17 +126,14 @@ const updateRestaurant = async (
     public_id_slider4
   }
 ) => {
-  const { latitude, longitude } = await getLatLngFromAddress(address)
   const restaurant = await RestaurantModel.findById(id, { deletedAt: null })
-  if (CommonUtils.checkNullOrUndefined(restaurant)) {
+  if (restaurant.length === 0) {
     throw new NotFoundError('Restaurant not found')
   }
   return await RestaurantModel.updateOne(
     { _id: mongoose.Types.ObjectId(id) },
     {
       name,
-      latitude,
-      longitude,
       openTime,
       closeTime,
       description,
