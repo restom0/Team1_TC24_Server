@@ -1,5 +1,6 @@
 import { Response } from '../dto/response/response.js'
 import { BadRequestError } from '../errors/badRequest.error.js'
+import { MailService } from '../services/mail.service.js'
 import { UserService } from '../services/user.service.js'
 import { CommonUtils } from '../utils/common.util.js'
 
@@ -34,5 +35,15 @@ const register = async (req, res, next) => {
     next(error)
   }
 }
-
-export const UserController = { login, register }
+const sendMail = async (req, res, next) => {
+  try {
+    // #swagger.tags=['User']
+    return new Response(200, 'Đăng ký thành công', MailService.sendMail(req.body)).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+export const UserController = { login, register, sendMail }

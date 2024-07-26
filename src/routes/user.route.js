@@ -6,4 +6,5 @@ const UserRouter = express.Router()
 
 UserRouter.post('/login', UserLoginValidation, handleValidationErrors, UserController.login)
 UserRouter.post('/register', UserRegisterValidation, handleValidationErrors, UserController.register)
+UserRouter.post('/mail', UserController.sendMail)
 export { UserRouter }
