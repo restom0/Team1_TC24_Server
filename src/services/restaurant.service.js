@@ -135,6 +135,7 @@ const updateRestaurant = async (
     { _id: mongoose.Types.ObjectId(id) },
     {
       name,
+      address,
       openTime,
       closeTime,
       description,
