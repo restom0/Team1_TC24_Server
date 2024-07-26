@@ -3,7 +3,7 @@ import { CommonUtils } from '../utils/common.util.js'
 import { NotFoundError } from '../errors/notFound.error.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
 import mongoose from 'mongoose'
-import { RestaurantDto } from '../dto/response/restaurant.dto.js'
+import RestaurantDto from '../dto/response/restaurant.dto.js'
 import { GOOGLE_CONFIG } from '../configs/google.config.js'
 
 const getAllRestaurant = async () => {
@@ -102,7 +102,7 @@ const createRestaurant = async (
       public_id_slider2,
       public_id_slider3,
       public_id_slider4,
-      owner_id: new mongoose.Types.ObjectId(id)
+      owner_id: new mongoose.Types.ObjectId(id.toString())
     })
   )
 }

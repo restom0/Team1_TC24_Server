@@ -5,7 +5,7 @@
 //     description: { type: String, required: true },
 //     imageUrls: { type: String, required: true },
 //     createdAt: { type: Date, required: true, default: Date.now },
-const RestaurantDto = {
+class RestaurantDto {
   constructor(Table) {
     this.id = Table.id
     this.name = Table.name
@@ -25,4 +25,5 @@ const RestaurantDto = {
     this.public_id_slider4 = Table.public_id_slider4
   }
 }
-export { RestaurantDto }
+
+export default RestaurantDto
