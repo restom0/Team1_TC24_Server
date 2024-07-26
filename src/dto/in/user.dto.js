@@ -20,6 +20,16 @@ const UserRegisterValidation = [
     .withMessage('Phone must be a string')
     .isMobilePhone('vi-VN')
     .withMessage('Phone must be a valid phone number'),
+
+  body('password')
+    .notEmpty()
+    .withMessage('Password is required')
+    .isString()
+    .withMessage('Password must be a string')
+    .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$/)
+    .withMessage(
+      'Password must be at least 8 characters long, contain at least one number, one capital letter, one lowercase letter and one special character'
+    ),
   body('name').notEmpty().withMessage('Name is required').isString().withMessage('Name must be a string')
 ]
 const UserChangePasswordValidation = [
