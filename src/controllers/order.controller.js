@@ -65,6 +65,7 @@ const createOrder = async (req, res) => {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Dữ liệu là bắt buộc')
     }
+    console.log(req.user)
     const result = await OrderService.createOrder(req.user.id, req.body)
     return new Response(HttpStatusCode.Created, 'Thành Công', result).resposeHandler(res)
   } catch (error) {

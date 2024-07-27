@@ -22,6 +22,7 @@ export const requireApiKey = async (req, res, next) => {
       throw new UnAuthorizedError('You need to login')
     }
     const apiKey = req.headers.authorization.split(' ')[1]
+
     jwt.verify(apiKey, 'secret', async (err, decoded) => {
       if (err || !decoded) {
         throw new ForbiddenRequestError('Invalid access')

@@ -38,14 +38,31 @@ const getAllOrder = async () => {
       $unwind: '$user'
     },
     {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurantId',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
       $project: {
         _id: 1,
-        tableId: 1,
-        tableName: '$table.name',
-        total: 1,
+        table: '$table',
+        user: '$user',
+        restaurant: '$restaurant',
+        totalPeople: 1,
+        name: 1,
+        phone_number: 1,
+        payment: 1,
+        menuList: 1,
         status: 1,
-        createdAt: 1,
-        updatedAt: 1
+        checkin: 1,
+        orderCode: 1,
+        checkout: 1
       }
     }
   ])
@@ -60,7 +77,7 @@ const getOrderById = async (id) => {
   const orders = await OrderModel.aggregate([
     {
       $match: {
-        _id: Types.ObjectId(id),
+        _id: Types.ObjectId.createFromHexString(id),
         deletedAt: null
       }
     },
@@ -87,14 +104,31 @@ const getOrderById = async (id) => {
       $unwind: '$user'
     },
     {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurantId',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
       $project: {
         _id: 1,
-        tableId: 1,
-        tableName: '$table.name',
-        total: 1,
+        table: '$table',
+        user: '$user',
+        restaurant: '$restaurant',
+        totalPeople: 1,
+        name: 1,
+        phone_number: 1,
+        payment: 1,
+        menuList: 1,
         status: 1,
-        createdAt: 1,
-        updatedAt: 1
+        checkin: 1,
+        orderCode: 1,
+        checkout: 1
       }
     }
   ])
@@ -104,20 +138,26 @@ const getOrderById = async (id) => {
   }
   return list
 }
-const createOrder = async (id, { tableNumber, name, phoneNumber, payment, menu, checkin }) => {
+const createOrder = async (
+  id,
+  { tableId, totalPeople, name, phoneNumber, payment, menu, checkin, restaurantId, total }
+) => {
   const order = await OrderModel.create({
     userId: id,
-    tableNumber,
+    tableId,
+    totalPeople,
     name,
     phone_number: phoneNumber,
     payment,
-    orderCode: Number(String(new Date().getTime()).slice(-6)),
-    menu,
+    menuList: menu,
     status: 'PENDING',
-    checkin
+    checkin,
+    orderCode: Number(String(new Date().getTime()).slice(-6)),
+    restaurantId,
+    totalOrder: total
   })
   if (payment === 'CREDIT_CARD') {
-    const paymentLinkRes = await payOrder({ orderCode: order.orderCode, total: order.total })
+    const paymentLinkRes = await payOrder({ orderCode: order.orderCode, total })
     return { order, paymentLinkRes }
   }
   return order

@@ -7,7 +7,7 @@ const Order = new Schema(
     _id: ObjectId,
     userId: { type: ObjectId, ref: 'Users', required: true },
     tableId: { type: ObjectId, ref: 'Tables', required: true },
-    totalTable: { type: Number, required: true },
+    totalPeople: { type: Number, required: true },
     name: { type: String, required: true },
     phone_number: { type: String, required: true },
     payment: { type: String, require: true, enum: PAYMENT_METHOD },
@@ -19,7 +19,8 @@ const Order = new Schema(
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
     deletedAt: { type: Date, default: null },
-    restaurantId: { type: ObjectId, ref: 'Restaurants', required: true }
+    restaurantId: { type: ObjectId, ref: 'Restaurants', required: true },
+    totalOrder: { type: Number, default: 0 }
   },
   { timestamps: true }
 )
