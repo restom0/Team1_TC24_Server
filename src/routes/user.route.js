@@ -14,6 +14,5 @@ UserRouter.get('/', UserController.getAllUsers)
 UserRouter.delete('/:id', UserController.deleteUser)
 UserRouter.post('/mailrs', UserController.sendResetPasswordEmail)
 UserRouter.post('/reset-password', UserController.resetPassword)
-// Route cho tìm user dựa trên bất kỳ trường nào
 UserRouter.post('/find-users', UserController.findUsersByAnyField)
 export { UserRouter }

@@ -1,87 +1,70 @@
 import { Response } from '../dto/response/response.js'
-import MenuItem from '../models/menus.model.js'
-
-const createMenuItem = async (req, res) => {
-  // #swagger.tags=['Menu']
+import { MenuService } from '../services/menus.service.js'
+import { BadRequestError } from '../errors/badRequest.error.js'
+const createMenuItem = async (req, res, next) => {
   try {
-    const newItem = new MenuItem(req.body)
-    await newItem.save()
+    const newItem = await MenuService.createMenuItem(req.body)
     return new Response(201, 'Menu đã được tạo', newItem).resposeHandler(res)
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
 const getAllMenuItems = async (req, res) => {
-  // #swagger.tags=['Menu']
   try {
-    const items = await MenuItem.aggregate([
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurant_id',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      }
-    ])
-    res.status(200).json(items)
+    const items = await MenuService.getAllMenuItems()
+    return new Response(200, 'Thành Công', items).resposeHandler(res)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    return new Response(500, error.message, null).resposeHandler(res)
   }
 }
 
 const getMenuItemById = async (req, res) => {
-  // #swagger.tags=['Menu']
   try {
-    const item = await MenuItem.aggregate([
-      {
-        $match: { _id: req.params.id }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurant_id',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      }
-    ])
-    if (!item) return res.status(404).json({ message: 'Không thấy menu' })
-    res.status(200).json(item)
+    const item = await MenuService.getMenuItemById(req.params.id)
+    return new Response(200, 'Thành Công', item).resposeHandler(res)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    return new Response(error.message === 'Không tìm thấy menu' ? 404 : 500, error.message, null).resposeHandler(res)
   }
 }
 
-const updateMenuItemById = async (req, res) => {
-  // #swagger.tags=['Menu']
+const updateMenuItemById = async (req, res, next) => {
   try {
-    const item = await MenuItem.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
-    })
-    if (!item) return res.status(404).json({ message: 'Không thấy menu' })
-    res.status(200).json(item)
+    const item = await MenuService.updateMenuItemById(req.params.id, req.body)
+    return new Response(200, 'Menu đã được cập nhật', item).resposeHandler(res)
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
 const deleteMenuItemById = async (req, res) => {
-  // #swagger.tags=['Menu']
   try {
-    const item = await MenuItem.findByIdAndDelete(req.params.id)
-    if (!item) return res.status(404).json({ message: 'Không thấy menu' })
-    res.status(200).json({ message: 'Menu đã được xóa' })
+    await MenuService.deleteMenuItemById(req.params.id)
+    return new Response(200, 'Menu đã được xóa', null).resposeHandler(res)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    return new Response(error.message === 'Không tìm thấy menu' ? 404 : 500, error.message, null).resposeHandler(res)
+  }
+}
+
+const findMenuByAnyField = async (req, res, next) => {
+  try {
+    const { searchTerm } = req.body
+    if (!searchTerm) {
+      throw new BadRequestError('Giá trị tìm kiếm là bắt buộc')
+    }
+    const result = await MenuService.findMenuItemsByAnyField(searchTerm)
+    if (result.length === 0) {
+      return new Response(404, 'Không tìm thấy bàn', null).resposeHandler(res)
+    }
+    return new Response(200, 'Đã tìm thấy bàn', result).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }
 }
 
@@ -90,5 +73,6 @@ export const MenuController = {
   getAllMenuItems,
   getMenuItemById,
   updateMenuItemById,
-  deleteMenuItemById
+  deleteMenuItemById,
+  findMenuByAnyField
 }

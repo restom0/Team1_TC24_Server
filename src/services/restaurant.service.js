@@ -2,7 +2,7 @@ import axios from 'axios'
 import { CommonUtils } from '../utils/common.util.js'
 import { NotFoundError } from '../errors/notFound.error.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
-import mongoose from 'mongoose'
+import mongoose, { Types } from 'mongoose'
 import RestaurantDto from '../dto/response/restaurant.dto.js'
 import { GOOGLE_CONFIG } from '../configs/google.config.js'
 
@@ -11,7 +11,8 @@ const getAllRestaurant = async () => {
   return restaurants.map((restaurant) => new RestaurantDto(restaurant))
 }
 const getRestaurantById = async (id) => {
-  return new RestaurantDto(await RestaurantModel.findById(id, { deletedAt: null }))
+  const restaurant = await RestaurantModel.find({ _id: Types.ObjectId.createFromHexString(id), deletedAt: null })
+  return new RestaurantDto(restaurant[0])
 }
 
 const getLatLngFromAddress = async (address) => {
@@ -61,51 +62,41 @@ const createRestaurant = async (
     public_id_slider4
   }
 ) => {
-  // const { latitude, longitude } = await getLatLngFromAddress(address)
-  const restaurant = await RestaurantModel.find({
+  // Kiểm tra sự tồn tại của nhà hàng
+  const existingRestaurant = await RestaurantModel.findOne({
+    address,
+    deletedAt: null
+  })
+
+  if (existingRestaurant) {
+    throw new NotFoundError('Nhà hàng đã tồn tại')
+  }
+
+  // Tạo nhà hàng mới
+  const newRestaurant = new RestaurantModel({
+    _id: new mongoose.Types.ObjectId(),
     name,
     address,
-    // latitude,
-    // longitude,
     openTime,
     closeTime,
     description,
     imageUrls,
-    deletedAt: null,
+    slider1,
+    slider2,
+    slider3,
+    slider4,
     public_id_avatar,
     public_id_slider1,
     public_id_slider2,
     public_id_slider3,
-    public_id_slider4
+    public_id_slider4,
+    owner_id: new mongoose.Types.ObjectId(id.toString())
   })
-  
-  if (restaurant.length > 0) {
-    throw new NotFoundError('Restaurant already exists')
-  }
-  return new RestaurantDto(
-    await RestaurantModel.create({
-      _id: new mongoose.Types.ObjectId(),
-      name,
-      address,
-      // latitude,
-      // longitude,
-      openTime,
-      closeTime,
-      menu_id: [],
-      description,
-      imageUrls,
-      slider1,
-      slider2,
-      slider3,
-      slider4,
-      public_id_avatar,
-      public_id_slider1,
-      public_id_slider2,
-      public_id_slider3,
-      public_id_slider4,
-      owner_id: new mongoose.Types.ObjectId(id.toString())
-    })
-  )
+
+  // Lưu nhà hàng mới vào cơ sở dữ liệu
+  await newRestaurant.save()
+
+  return new RestaurantDto(newRestaurant)
 }
 
 const updateRestaurant = async (
@@ -128,12 +119,16 @@ const updateRestaurant = async (
     public_id_slider4
   }
 ) => {
-  const restaurant = await RestaurantModel.findById(id, { deletedAt: null })
-  if (restaurant.length === 0) {
-    throw new NotFoundError('Restaurant not found')
+  // Tìm nhà hàng theo ID
+  const restaurant = await getRestaurantById(id)
+
+  if (!restaurant || restaurant.deletedAt) {
+    throw new NotFoundError('Nhà hàng không tìm thấy')
   }
-  return await RestaurantModel.updateOne(
-    { _id: mongoose.Types.ObjectId(id) },
+
+  // Cập nhật nhà hàng
+  const result = await RestaurantModel.updateOne(
+    { _id: Types.ObjectId.createFromHexString(id) },
     {
       name,
       address,
@@ -153,6 +148,14 @@ const updateRestaurant = async (
       updatedAt: Date.now()
     }
   )
+
+  // Kiểm tra kết quả cập nhật
+  if (result.modifiedCount === 0) {
+    throw new NotFoundError('Nhà hàng không được cập nhật')
+  }
+
+  // Trả về nhà hàng đã cập nhật
+  return await RestaurantModel.findById(id)
 }
 
 const deleteRestaurant = async (id) => {
@@ -160,7 +163,10 @@ const deleteRestaurant = async (id) => {
   if (CommonUtils.checkNullOrUndefined(restaurant)) {
     throw new NotFoundError('Restaurant not found')
   }
-  return await RestaurantModel.findByIdAndUpdate({ _id: mongoose.Types.ObjectId(id), deletedAt: new Date() })
+  return await RestaurantModel.updateOne(
+    { _id: Types.ObjectId.createFromHexString(id), deletedAt: null },
+    { deletedAt: new Date() }
+  )
 }
 
 const calculateDistance = async (origin, destination) => {
@@ -204,12 +210,17 @@ const findRestaurantsByAnyField = async (searchTerm) => {
 
   // Tạo truy vấn tìm kiếm
   const query = {
-    $or: [
-      ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
-      { name: { $regex: searchTerm, $options: 'i' } },
-      { address: { $regex: searchTerm, $options: 'i' } },
-      { openTime: { $regex: searchTerm, $options: 'i' } },
-      { closeTime: { $regex: searchTerm, $options: 'i' } }
+    $and: [
+      {
+        $or: [
+          ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
+          { name: { $regex: searchTerm, $options: 'i' } },
+          { address: { $regex: searchTerm, $options: 'i' } },
+          { openTime: { $regex: searchTerm, $options: 'i' } },
+          { closeTime: { $regex: searchTerm, $options: 'i' } }
+        ]
+      },
+      { deletedAt: null } // Chỉ trả về nhà hàng không bị xóa
     ]
   }
 
