@@ -3,6 +3,7 @@ const ObjectId = Schema.ObjectId
 const Table = new Schema({
   _id: ObjectId,
   tableNumber: { type: Number, required: true },
+  price: { type: Number, required: true },
   restaurantID: { type: ObjectId, ref: 'Restaurants', required: true },
   createdAt: { type: Date, required: true, default: Date.now },
   updatedAt: { type: Date, required: true, default: Date.now },

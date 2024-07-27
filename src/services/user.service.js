@@ -109,7 +109,7 @@ const getUserById = async (id) => {
 }
 
 const getAllUsers = async () => {
-  return await UserModel.find().exec()
+  return await UserModel.find({ role: USER_ROLE.STAFF }).exec()
 }
 
 const deleteUser = async (id) => {

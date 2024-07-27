@@ -65,7 +65,11 @@ const registerStaff = async (req, res, next) => {
 const sendMail = async (req, res, next) => {
   try {
     // #swagger.tags=['User']
-    return new Response(200, 'Đăng ký thành công', MailService.sendMail(req.body)).resposeHandler(res)
+    if (CommonUtils.checkNullOrUndefined(req.body)) {
+      throw new BadRequestError('Username is required')
+    }
+    const result = await UserService.registerStaff(req.body)
+    return new Response(200, 'Đăng ký thành công', result).resposeHandler(res)
   } catch (error) {
     if (!res.headersSent) {
       return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
