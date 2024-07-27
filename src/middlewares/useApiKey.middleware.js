@@ -38,7 +38,7 @@ export const requireApiKey = async (req, res, next) => {
       }
     })
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).responseHandler(res)
+    next(error)
   }
 }
 
@@ -56,6 +56,6 @@ export const authentication = async (req, res, next) => {
     }
     next()
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).responseHandler(res)
+    next(error)
   }
 }
