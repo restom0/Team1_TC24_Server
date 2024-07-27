@@ -6,7 +6,7 @@ const createMenuItem = async (req, res) => {
   try {
     const newItem = new MenuItem(req.body)
     await newItem.save()
-    return new Response(201, 'Item created', newItem).resposeHandler(res)
+    return new Response(201, 'Menu đã được tạo', newItem).resposeHandler(res)
   } catch (error) {
     res.status(400).json({ message: error.message })
   }
@@ -53,7 +53,7 @@ const getMenuItemById = async (req, res) => {
         $unwind: '$restaurant'
       }
     ])
-    if (!item) return res.status(404).json({ message: 'Item not found' })
+    if (!item) return res.status(404).json({ message: 'Không thấy menu' })
     res.status(200).json(item)
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -67,7 +67,7 @@ const updateMenuItemById = async (req, res) => {
       new: true,
       runValidators: true
     })
-    if (!item) return res.status(404).json({ message: 'Item not found' })
+    if (!item) return res.status(404).json({ message: 'Không thấy menu' })
     res.status(200).json(item)
   } catch (error) {
     res.status(400).json({ message: error.message })
@@ -78,8 +78,8 @@ const deleteMenuItemById = async (req, res) => {
   // #swagger.tags=['Menu']
   try {
     const item = await MenuItem.findByIdAndDelete(req.params.id)
-    if (!item) return res.status(404).json({ message: 'Item not found' })
-    res.status(200).json({ message: 'Item deleted' })
+    if (!item) return res.status(404).json({ message: 'Không thấy menu' })
+    res.status(200).json({ message: 'Menu đã được xóa' })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

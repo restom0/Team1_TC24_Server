@@ -7,5 +7,6 @@ TableRouter.get('/:id', TableController.getTableById)
 TableRouter.post('/', TableController.createTable)
 TableRouter.put('/:id', TableController.updateTable)
 TableRouter.delete('/:id', TableController.deleteTable)
+TableRouter.post('/find-table', TableController.findTableByAnyField)
 
 export { TableRouter }

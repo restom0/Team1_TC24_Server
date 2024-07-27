@@ -9,7 +9,7 @@ const getAllRestaurant = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getAllRestaurant()
-    return new Response(200, 'Success', data).resposeHandler(res)
+    return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(500, error.message, null).resposeHandler(res)
   }
@@ -19,7 +19,7 @@ const getRestaurantById = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getRestaurantById(req.params.id)
-    return new Response(200, 'Success', data).resposeHandler(res)
+    return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
@@ -29,10 +29,10 @@ const createRestaurant = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
-      throw new BadRequestError('Data is required')
+      throw new BadRequestError('Dữ liệu là bắt buộc')
     }
     const result = await RestaurantService.createRestaurant(req.user.id, req.body)
-    return new Response(201, 'Success', result).resposeHandler(res)
+    return new Response(201, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
     return new Response(500, error.message, null).resposeHandler(res)
   }
@@ -42,10 +42,10 @@ const updateRestaurant = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
-      throw new BadRequestError('Data is required')
+      throw new BadRequestError('Dữ liệu là bắt buộc')
     }
     const result = await RestaurantService.updateRestaurant(req.params.id, req.body)
-    return new Response(200, 'Success', result).resposeHandler(res)
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
@@ -55,7 +55,7 @@ const deleteRestaurant = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     const result = await RestaurantService.deleteRestaurant(req.params.id)
-    return new Response(HttpStatusCode.Accepted, 'Success', result).resposeHandler(res)
+    return new Response(HttpStatusCode.Accepted, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
@@ -65,7 +65,7 @@ const getFourNearestRestaurant = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getFourNearestRestaurant(req.query)
-    return new Response(200, 'Success', data).resposeHandler(res)
+    return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
@@ -75,9 +75,25 @@ const getDistanceFromRestaurant = async (req, res) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getDistanceFromRestaurant(req.query)
-    return new Response(200, 'Success', data).resposeHandler(res)
+    return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
+  }
+}
+
+const findRestaurantByAnyField = async (req, res, next) => {
+  try {
+    const { searchTerm } = req.body
+    if (!searchTerm) {
+      throw new BadRequestError('Giá trị tìm kiếm là bắt buộc')
+    }
+    const result = await RestaurantService.findRestaurantsByAnyField(searchTerm)
+    if (result.length === 0) {
+      return new Response(404, 'Không tìm thấy nhà hàng', null).resposeHandler(res)
+    }
+    return new Response(200, 'Đã tìm thấy nhà hàng', result).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }
 }
 
@@ -87,5 +103,6 @@ export const RestaurantController = {
   createRestaurant,
   updateRestaurant,
   deleteRestaurant,
-  getFourNearestRestaurant
+  getFourNearestRestaurant,
+  findRestaurantByAnyField
 }

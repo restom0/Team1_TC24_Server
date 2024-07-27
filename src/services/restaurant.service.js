@@ -197,6 +197,23 @@ const getDistanceFromRestaurant = async (restaurantId, latitude, longitude) => {
   const restaurant = await RestaurantModel.findById(restaurantId)
   return await calculateDistance(`${latitude},${longitude}`, `${restaurant.latitude},${restaurant.longitude}`)
 }
+const findRestaurantsByAnyField = async (searchTerm) => {
+  // Kiểm tra nếu searchTerm là một ObjectId hợp lệ
+  const isObjectId = mongoose.Types.ObjectId.isValid(searchTerm)
+
+  // Tạo truy vấn tìm kiếm
+  const query = {
+    $or: [
+      ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { address: { $regex: searchTerm, $options: 'i' } },
+      { openTime: { $regex: searchTerm, $options: 'i' } },
+      { closeTime: { $regex: searchTerm, $options: 'i' } }
+    ]
+  }
+
+  return await RestaurantModel.find(query).lean()
+}
 export const RestaurantService = {
   getAllRestaurant,
   getRestaurantById,
@@ -204,5 +221,6 @@ export const RestaurantService = {
   updateRestaurant,
   deleteRestaurant,
   getFourNearestRestaurant,
-  getDistanceFromRestaurant
+  getDistanceFromRestaurant,
+  findRestaurantsByAnyField
 }

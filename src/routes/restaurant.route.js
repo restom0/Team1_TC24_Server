@@ -33,5 +33,6 @@ RestaurantRouter.delete(
   handleValidationErrors,
   RestaurantController.deleteRestaurant
 )
+RestaurantRouter.post('/find-restaurant', RestaurantController.findRestaurantByAnyField)
 
 export { RestaurantRouter }

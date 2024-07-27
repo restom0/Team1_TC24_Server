@@ -93,11 +93,25 @@ const deleteTable = async (id) => {
   }
   return await TableModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), { deletedAt: Date.now() })
 }
+const findTablesByAnyField = async (searchTerm) => {
+  const isObjectId = mongoose.Types.ObjectId.isValid(searchTerm)
+
+  const query = {
+    $or: [
+      ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
+      { tableNumber: searchTerm },
+      { restaurantID: isObjectId ? new mongoose.Types.ObjectId(searchTerm) : null }
+    ]
+  }
+
+  return await TableModel.find(query).lean()
+}
 
 export const TableService = {
   getAllTable,
   getTableById,
   createTable,
   updateTable,
-  deleteTable
+  deleteTable,
+  findTablesByAnyField
 }

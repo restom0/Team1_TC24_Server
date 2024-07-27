@@ -1,31 +1,32 @@
-import { body, validationResult } from 'express-validator'
+import { body } from 'express-validator'
+
 export const validateMenuItem = [
-  body('code').notEmpty().withMessage('Code is required').isString().withMessage('Code must be a string'),
+  body('code').notEmpty().withMessage('Mã không được để trống').isString().withMessage('Mã phải là một chuỗi'),
   body('name')
     .trim()
     .custom((value, { req }) => {
       if (value.trim().length === 0) {
-        throw new Error('Name cannot be empty or contain only spaces')
+        throw new Error('Tên không được để trống hoặc chỉ chứa khoảng trắng')
       }
       return true
     }),
   body('category')
     .notEmpty()
-    .withMessage('Category is required')
+    .withMessage('Danh mục không được để trống')
     .isString()
-    .withMessage('Category must be a string')
+    .withMessage('Danh mục phải là một chuỗi')
     .isIn(['Dish', 'Beverage', 'Dessert'])
-    .withMessage('Category must be one of: Dish, Beverage, Dessert'),
+    .withMessage('Danh mục phải là một trong các giá trị: Dish, Beverage, Dessert'),
   body('description')
     .notEmpty()
-    .withMessage('Description is required')
+    .withMessage('Mô tả không được để trống')
     .isString()
-    .withMessage('Description must be a string'),
-  body('unit').notEmpty().withMessage('Unit is required').isString().withMessage('Unit must be a string'),
+    .withMessage('Mô tả phải là một chuỗi'),
+  body('unit').notEmpty().withMessage('Đơn vị không được để trống').isString().withMessage('Đơn vị phải là một chuỗi'),
   body('price')
     .notEmpty()
-    .withMessage('Price is required')
+    .withMessage('Giá không được để trống')
     .isFloat({ min: 0 })
-    .withMessage('Price must be a positive number'),
-  body('discount').optional().isFloat({ min: 0 }).withMessage('Discount must be a positive number')
+    .withMessage('Giá phải là một số dương'),
+  body('discount').optional().isFloat({ min: 0 }).withMessage('Giảm giá phải là một số dương')
 ]

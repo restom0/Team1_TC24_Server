@@ -4,62 +4,68 @@ const UserLoginValidation = [
   (body('username') || body('phone'))
     .trim()
     .notEmpty()
-    .withMessage('Username is required')
+    .withMessage('Tên đăng nhập là bắt buộc')
     .isString()
-    .withMessage('Username must be a string'),
+    .withMessage('Tên đăng nhập phải là một chuỗi'),
   body('password')
     .trim()
     .notEmpty()
-    .withMessage('Password is required')
+    .withMessage('Mật khẩu là bắt buộc')
     .isString()
-    .withMessage('Password must be a string')
+    .withMessage('Mật khẩu phải là một chuỗi')
 ]
 
 const UserRegisterValidation = [
   body('username')
     .trim()
     .notEmpty()
-    .withMessage('Username is required')
+    .withMessage('Tên đăng nhập là bắt buộc')
     .isString()
-    .withMessage('Username must be a string'),
+    .withMessage('Tên đăng nhập phải là một chuỗi'),
   body('password')
     .trim()
     .notEmpty()
-    .withMessage('Password is required')
+    .withMessage('Mật khẩu là bắt buộc')
     .isString()
-    .withMessage('Password must be a string'),
-  body('email').trim().notEmpty().withMessage('Email is required').isEmail().withMessage('Email must be a valid email'),
+    .withMessage('Mật khẩu phải là một chuỗi'),
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email là bắt buộc')
+    .isEmail()
+    .withMessage('Email phải là một email hợp lệ'),
   body('phone')
     .trim()
     .notEmpty()
-    .withMessage('Phone is required')
+    .withMessage('Số điện thoại là bắt buộc')
     .isString()
-    .withMessage('Phone must be a string')
+    .withMessage('Số điện thoại phải là một chuỗi')
     .isMobilePhone('vi-VN')
-    .withMessage('Phone must be a valid phone number'),
-
+    .withMessage('Số điện thoại phải là một số điện thoại hợp lệ'),
   body('password')
     .trim()
     .notEmpty()
-    .withMessage('Password is required')
+    .withMessage('Mật khẩu là bắt buộc')
     .isString()
-    .withMessage('Password must be a string')
+    .withMessage('Mật khẩu phải là một chuỗi')
     .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/)
     .withMessage(
-      'Password must be at least 8 characters long, contain at least one number, one capital letter, one lowercase letter and one special character'
+      'Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một số, một chữ cái in hoa, một chữ cái thường và một ký tự đặc biệt'
     ),
-  body('name').trim().notEmpty().withMessage('Name is required').isString().withMessage('Name must be a string')
+  body('name').trim().notEmpty().withMessage('Tên là bắt buộc').isString().withMessage('Tên phải là một chuỗi')
 ]
+
 const UserChangePasswordValidation = [
   body('password')
     .trim()
     .notEmpty()
-    .withMessage('Password is required')
+    .withMessage('Mật khẩu là bắt buộc')
     .isString()
-    .withMessage('Password must be a string')
+    .withMessage('Mật khẩu phải là một chuỗi')
     .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z])(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/)
     .withMessage(
-      'Password must be at least 8 characters long, contain at least one number, one capital letter, one lowercase letter and one special character'
+      'Mật khẩu phải có ít nhất 8 ký tự, bao gồm ít nhất một số, một chữ cái in hoa, một chữ cái thường và một ký tự đặc biệt'
     )
 ]
+
 export { UserLoginValidation, UserRegisterValidation, UserChangePasswordValidation }
