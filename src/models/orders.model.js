@@ -19,7 +19,8 @@ const Order = new Schema(
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
     deletedAt: { type: Date, default: null },
-    restaurantId: { type: ObjectId, ref: 'Restaurants', required: true }
+    restaurantId: { type: ObjectId, ref: 'Restaurants', required: true },
+    totalOrder: { type: Number, default: 0 }
   },
   { timestamps: true }
 )
