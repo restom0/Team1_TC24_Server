@@ -20,7 +20,7 @@ const getOrderById = async (req, res) => {
     const data = await OrderService.getOrderById(req.params.id)
     return new Response(HttpStatusCode.Ok, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }
 }
 const confirmOrder = async (req, res) => {
@@ -29,7 +29,7 @@ const confirmOrder = async (req, res) => {
     const data = await OrderService.confirmOrder(req.params.id)
     return new Response(HttpStatusCode.Ok, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }
 }
 
@@ -92,7 +92,29 @@ const deleteOrder = async (req, res) => {
     const result = await OrderService.deleteOrder(req.params.id)
     return new Response(200, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+  }
+}
+const getSuccessfulOrders = async (req, res, next) => {
+  try {
+    const orders = await OrderService.findSuccessfulOrders()
+    return new Response(200, 'Thành Công', orders).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+const getPendingCashOrders = async (req, res, next) => {
+  try {
+    const orders = await OrderService.findPendingCashOrders()
+    return new Response(200, 'Thành Công', orders).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -103,5 +125,7 @@ export const OrderController = {
   updateOrder,
   deleteOrder,
   confirmOrder,
-  payOrder
+  payOrder,
+  getSuccessfulOrders,
+  getPendingCashOrders
 }

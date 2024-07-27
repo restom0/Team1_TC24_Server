@@ -12,11 +12,12 @@ import { requireApiKey } from '../middlewares/useApiKey.middleware.js'
 const OrderRouter = express.Router()
 
 OrderRouter.get('/', OrderGetAllValidation, handleValidationErrors, OrderController.getAllOrder)
-OrderRouter.get('/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.getOrderById)
+OrderRouter.get('/order/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.getOrderById)
 OrderRouter.get('/confirm/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.confirmOrder)
 OrderRouter.post('/pay/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.payOrder)
 OrderRouter.post('/', requireApiKey, OrderCreateValidation, handleValidationErrors, OrderController.createOrder)
 OrderRouter.put('/:id', OrderUpdateValidation, handleValidationErrors, OrderController.updateOrder)
 OrderRouter.delete('/:id', OrderDeleteValidation, handleValidationErrors, OrderController.deleteOrder)
-
+OrderRouter.get('/checkout', OrderController.getSuccessfulOrders)
+OrderRouter.get('/checkin', OrderController.getPendingCashOrders)
 export { OrderRouter }

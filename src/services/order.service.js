@@ -7,7 +7,8 @@ import mongoose, { Types } from 'mongoose'
 import { BadRequestError } from '../errors/badRequest.error.js'
 import { OrderDto } from '../dto/response/order.dto.js'
 import { payOS } from '../configs/payos.config.js'
-
+import { PAYMENT_METHOD } from '../constants/payment_method.constant.js'
+import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
 const getAllOrder = async () => {
   const orders = await OrderModel.aggregate([
     {
@@ -227,6 +228,19 @@ const deleteOrder = async (id) => {
   }
   return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), { deletedAt: Date.now() })
 }
+const findSuccessfulOrders = async () => {
+  return await OrderModel.find({ status: 'ONHOLD' }).lean()
+}
+
+const findPendingCashOrders = async () => {
+  const query = {
+    payment: PAYMENT_METHOD.CASH,
+    status: PAYMENT_STATUS.PENDING
+  }
+  const orders = await OrderModel.find(query).lean()
+  return orders
+}
+
 export const OrderService = {
   getAllOrder,
   getOrderById,
@@ -234,5 +248,7 @@ export const OrderService = {
   updateOrder,
   deleteOrder,
   confirmOrder,
-  payOrder
+  payOrder,
+  findSuccessfulOrders,
+  findPendingCashOrders
 }
