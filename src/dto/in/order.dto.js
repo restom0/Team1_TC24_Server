@@ -14,7 +14,7 @@ const OrderCreateValidation = [
     .isNumeric()
     .withMessage('Tổng số người phải là số'),
   body('name').trim().notEmpty().withMessage('Thiếu tên').isString().withMessage('Tên phải là chuỗi'),
-  body('phone_number')
+  body('phoneNumber')
     .trim()
     .notEmpty()
     .withMessage('Thiếu số điện thoại')
@@ -26,13 +26,11 @@ const OrderCreateValidation = [
     .withMessage('Thiếu hình thức thanh toán')
     .isString()
     .withMessage('Hình thức thanh toán phải là chuỗi')
-    .custom((value) => {
-      return PAYMENT_METHOD.includes(value)
-    })
+    .isIn(['CASH', 'CREDIT_CARD'])
     .withMessage('Hình thức thanh toán không hợp lệ'),
-  body('menu').trim().notEmpty().withMessage('Thiếu menu').isArray().withMessage('menu phải là mảng'),
-  body('menu._id').trim().notEmpty().withMessage('Thiếu menu').isMongoId().withMessage('menu không hợp lệ'),
-  body('menu.quantity')
+  body('menu').isArray().withMessage('menu phải là mảng').notEmpty().withMessage('Thiếu menu'),
+  body('menu.*._id').trim().notEmpty().withMessage('Thiếu menu').isMongoId().withMessage('menu không hợp lệ'),
+  body('menu.*.quantity')
     .trim()
     .isNumeric()
     .withMessage('Số lượng menu là số')
@@ -42,9 +40,9 @@ const OrderCreateValidation = [
     .trim()
     .notEmpty()
     .withMessage('Thiếu ngày checkin')
-    .isDate()
+    .isISO8601()
     .withMessage('Ngày checkin không hợp lệ')
-    .isAfter(Date.now)
+    .isAfter(new Date().toISOString())
     .withMessage('Ngày checkin không hợp lệ'),
   body('restaurantId')
     .trim()
@@ -52,12 +50,7 @@ const OrderCreateValidation = [
     .withMessage('Thiếu mã nhà hàng')
     .isMongoId()
     .withMessage('nhà hàng không hợp lệ'),
-  body('totalOrder')
-    .trim()
-    .notEmpty()
-    .withMessage('Thiếu tổng hóa đơn')
-    .isNumeric()
-    .withMessage('Tổng hóa đơn phải là số')
+  body('total').trim().notEmpty().withMessage('Thiếu tổng hóa đơn').isNumeric().withMessage('Tổng hóa đơn phải là số')
 ]
 
 const OrderUpdateValidation = [

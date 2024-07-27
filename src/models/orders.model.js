@@ -15,7 +15,7 @@ const Order = new Schema(
     status: { type: String, required: true, enum: PAYMENT_STATUS },
     checkin: { type: Date, required: true },
     orderCode: { type: Number, default: Number(String(new Date().getTime()).slice(-6)) },
-    checkout: { type: Date, required: true, default: null },
+    checkout: { type: Date, default: null },
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
     deletedAt: { type: Date, default: null },

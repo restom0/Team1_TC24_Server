@@ -65,27 +65,67 @@ const createOrder = async (req, res) => {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Dữ liệu là bắt buộc')
     }
-    console.log(req.user)
     const result = await OrderService.createOrder(req.user.id, req.body)
     return new Response(HttpStatusCode.Created, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
   }
 }
-
+const createDirectOrder = async (req, res) => {
+  // #swagger.tags=['Order']
+  try {
+    if (CommonUtils.checkNullOrUndefined(req.body)) {
+      throw new BadRequestError('Dữ liệu là bắt buộc')
+    }
+    const result = await OrderService.createDirectOrder(req.user.id, req.body)
+    return new Response(HttpStatusCode.Created, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+  }
+}
 const updateOrder = async (req, res) => {
   // #swagger.tags=['Order']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
       throw new BadRequestError('Dữ liệu là bắt buộc')
     }
-    const result = await OrderService.updateOrder(req.params.id, ...req.body)
+    const result = await OrderService.updateOrder(req.params.id, req.body)
     return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+  }
+}
+const confirmDirectOrder = async (req, res) => {
+  // #swagger.tags=['Order']
+  try {
+    const data = await OrderService.confirmDirectOrder(req.params.id)
+    return new Response(HttpStatusCode.Ok, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode, error.message, null).resposeHandler(res)
   }
 }
-
+const updateCheckin = async (req, res) => {
+  // #swagger.tags=['Order']
+  try {
+    const data = await OrderService.updateCheckin(req.params.id)
+    return new Response(HttpStatusCode.Ok, 'Thành Công', data).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+  }
+}
+const updateCheckout = async (req, res) => {
+  // #swagger.tags=['Order']
+  try {
+    const data = await OrderService.updateCheckout(req.params.id)
+    return new Response(HttpStatusCode.Ok, 'Thành Công', data).resposeHandler(res)
+  } catch (error) {
+    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+  }
+}
 const deleteOrder = async (req, res) => {
   // #swagger.tags=['Order']
   try {
@@ -103,5 +143,10 @@ export const OrderController = {
   updateOrder,
   deleteOrder,
   confirmOrder,
-  payOrder
+  payOrderDirect,
+  payOrder,
+  createDirectOrder,
+  confirmDirectOrder,
+  updateCheckin,
+  updateCheckout
 }

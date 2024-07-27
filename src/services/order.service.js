@@ -7,6 +7,9 @@ import mongoose, { Types } from 'mongoose'
 import { BadRequestError } from '../errors/badRequest.error.js'
 import { OrderDto } from '../dto/response/order.dto.js'
 import { payOS } from '../configs/payos.config.js'
+import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
+import { check } from 'express-validator'
+import { PAYMENT_METHOD } from '../constants/payment_method.constant.js'
 
 const getAllOrder = async () => {
   const orders = await OrderModel.aggregate([
@@ -143,6 +146,7 @@ const createOrder = async (
   { tableId, totalPeople, name, phoneNumber, payment, menu, checkin, restaurantId, total }
 ) => {
   const order = await OrderModel.create({
+    _id: new mongoose.Types.ObjectId(),
     userId: id,
     tableId,
     totalPeople,
@@ -162,29 +166,39 @@ const createOrder = async (
   }
   return order
 }
-
-const updateOrder = async (id, { tableId, name, phoneNumber, payment, menu, status, checkin }) => {
+const createDirectOrder = async (
+  id,
+  { tableId, totalPeople, name, phoneNumber, payment, menu, checkin, restaurantId, total }
+) => {
+  const order = await OrderModel.create({
+    _id: new mongoose.Types.ObjectId(),
+    userId: id,
+    tableId,
+    totalPeople,
+    name,
+    phone_number: phoneNumber,
+    payment,
+    menuList: menu,
+    status: 'PENDING',
+    checkin,
+    orderCode: Number(String(new Date().getTime()).slice(-6)),
+    restaurantId,
+    totalOrder: total
+  })
+  if (payment === 'CREDIT_CARD') {
+    const paymentLinkRes = await payDirectOrder({ orderCode: order.orderCode, total })
+    return { order, paymentLinkRes }
+  }
+  return order
+}
+const updateOrder = async (id, { menu, total }) => {
   const order = await OrderModel.findById(id)
   if (!order) {
     throw new NotFoundError('Order not found')
   }
-  for (const tableIdItem of tableId) {
-    const table = await TableModel.findById(tableIdItem)
-    if (!table) {
-      throw new NotFoundError('Table not found')
-    }
-    if (table.status === false) {
-      throw new BadRequestError('Table is not available')
-    }
-  }
   return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), {
-    tableId,
-    name,
-    phone_number: phoneNumber,
-    payment,
-    menu,
-    status,
-    checkin,
+    menuList: menu,
+    totalOrder: total,
     updatedAt: Date.now()
   })
 }
@@ -208,12 +222,70 @@ const confirmOrder = async (id) => {
     return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'SUCCESS' })
   }
 }
-const payDirectOrder = async (req, res) => {}
+const confirmDirectOrder = async (id) => {
+  const order = await OrderModel.findById(id)
+  if (!order) throw new NotFoundError('Order not found')
+  order.status = PAYMENT_STATUS.ONHOLD
+  return await OrderModel.findByIdAndUpdate(id, {
+    status: 'SUCCESS'
+  })
+}
+const payDirectOrder = async (total) => {
+  // https://api.vietqr.io/v2/generate
+  const body = {
+    accountNo: process.env.BANK_ACCOUNT,
+    accountName: 'THÁI NGỌC RẠNG',
+    acqId: 970416,
+    amount: total,
+    addInfo: 'Thanh toán đơn hàng',
+    format: 'text',
+    template: 'print'
+  }
+  const response = await axios
+    .post('https://api.vietqr.io/v2/generate', body, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(() => {
+      if (response?.code === '00') {
+        return {
+          qr_url: response?.qrDataURL
+        }
+      } else {
+        throw new BadRequestError(response.desc)
+      }
+    })
+}
+const updateCheckout = async (id) => {
+  const order = await OrderModel.find({ _id: id, status: PAYMENT_STATUS.ONHOLD })
+  if (order.length === 0) {
+    throw new NotFoundError('Order not found')
+  }
+  return await OrderModel.findByIdAndUpdate(id, {
+    status: PAYMENT_STATUS.COMPLETED,
+    checkout: new Date()
+  })
+}
+const updateCheckin = async (id) => {
+  const order = await OrderModel.find({
+    $or: [
+      { _id: id, status: PAYMENT_STATUS.SUCCESS },
+      { _id: id, status: PAYMENT_STATUS.PENDING, method: PAYMENT_METHOD.CASH }
+    ]
+  })
+  if (order.length === 0) {
+    throw new NotFoundError('Order not found')
+  }
+  return await OrderModel.findByIdAndUpdate(id, {
+    status: PAYMENT_STATUS.ONHOLD
+  })
+}
 const payOrder = async ({ orderCode, total }) => {
   const YOUR_DOMAIN = 'http://localhost:5173'
   const body = {
     orderCode,
-    amount: total,
+    amount: Number(total),
     description: 'Thanh toán đơn hàng',
     returnUrl: `${YOUR_DOMAIN}/checkout?step=3`,
     cancelUrl: `${YOUR_DOMAIN}/checkout?step=3`
@@ -234,5 +306,9 @@ export const OrderService = {
   updateOrder,
   deleteOrder,
   confirmOrder,
-  payOrder
+  payOrder,
+  createDirectOrder,
+  confirmDirectOrder,
+  updateCheckin,
+  updateCheckout
 }
