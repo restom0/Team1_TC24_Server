@@ -6,7 +6,8 @@ const Order = new Schema(
   {
     _id: ObjectId,
     userId: { type: ObjectId, ref: 'Users', required: true },
-    tableId: { type: [ObjectId], ref: 'Tables', required: true },
+    tableId: { type: ObjectId, ref: 'Tables', required: true },
+    totalTable: { type: Number, required: true },
     name: { type: String, required: true },
     phone_number: { type: String, required: true },
     payment: { type: String, require: true, enum: PAYMENT_METHOD },
