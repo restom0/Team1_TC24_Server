@@ -17,7 +17,8 @@ const Order = new Schema(
     checkout: { type: Date, required: true, default: null },
     createdAt: { type: Date, required: true, default: Date.now },
     updatedAt: { type: Date, required: true, default: Date.now },
-    deletedAt: { type: Date, default: null }
+    deletedAt: { type: Date, default: null },
+    restaurantId: { type: ObjectId, ref: 'Restaurants', required: true }
   },
   { timestamps: true }
 )

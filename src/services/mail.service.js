@@ -1,5 +1,6 @@
 import { MAIL_CONFIG } from '../configs/mail.config.js'
 import nodemailer from 'nodemailer'
+import { UserModel } from '../models/users.model.js'
 const transporter = nodemailer.createTransport({
   port: 465,
   host: MAIL_CONFIG.SMTP_HOST,

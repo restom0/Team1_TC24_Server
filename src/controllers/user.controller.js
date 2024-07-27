@@ -35,10 +35,14 @@ const register = async (req, res, next) => {
     next(error)
   }
 }
-const sendMail = async (req, res, next) => {
+const registerStaff = async (req, res, next) => {
   try {
     // #swagger.tags=['User']
-    return new Response(200, 'Đăng ký thành công', MailService.sendMail(req.body)).resposeHandler(res)
+    if (CommonUtils.checkNullOrUndefined(req.body)) {
+      throw new BadRequestError('Username is required')
+    }
+    const result = await UserService.registerStaff(req.body)
+    return new Response(200, 'Đăng ký thành công', result).resposeHandler(res)
   } catch (error) {
     if (!res.headersSent) {
       return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
@@ -76,10 +80,20 @@ const deleteUser = async (req, res, next) => {
     if (!user) {
       throw new BadRequestError('User not found')
     }
-    new Response(200, 'User deleted successfully', null).resposeHandler(res)
+    return new Response(200, 'User deleted successfully', null).resposeHandler(res)
   } catch (error) {
-    new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }
 }
-
-export const UserController = { login, register, getUserById, getAllUsers, deleteUser, registerStaff }
+const sendMail = async (req, res, next) => {
+  try {
+    // #swagger.tags=['User']
+    return new Response(200, 'Đăng ký thành công', MailService.sendMail(req.body)).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+export const UserController = { login, register, getUserById, getAllUsers, deleteUser, registerStaff, sendMail }

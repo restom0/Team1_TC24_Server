@@ -1,6 +1,6 @@
 const OrderDto = {
   constructor(Order) {
-    this.id = Order.id
+    this._id = Order._id
     this.userId = Order.userId
     this.tableId = Order.tableId
     this.name = Order.name

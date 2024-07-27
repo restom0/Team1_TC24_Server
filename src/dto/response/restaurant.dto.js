@@ -7,7 +7,7 @@
 //     createdAt: { type: Date, required: true, default: Date.now },
 class RestaurantDto {
   constructor(Table) {
-    this.id = Table.id
+    this._id = Table._id
     this.name = Table.name
     this.address = Table.address
     this.openTime = Table.openTime
