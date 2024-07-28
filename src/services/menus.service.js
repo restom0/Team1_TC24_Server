@@ -38,7 +38,34 @@ const createMenuItem = async ({ code, name, category, description, unit, price, 
 }
 
 const getAllMenuItems = async () => {
-  const items = await MenuItem.find()
+  const items = await MenuItem.aggregate([
+    {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurant_id',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
+      $project: {
+        _id: 1,
+        code: 1,
+        name: 1,
+        category: 1,
+        description: 1,
+        unit: 1,
+        price: 1,
+        discount: 1,
+        restaurant: {
+          name: 1
+        }
+      }
+    }
+  ])
   return items
 }
 
