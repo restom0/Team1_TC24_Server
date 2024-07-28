@@ -11,6 +11,7 @@ import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
 
 import { check } from 'express-validator'
+import { MailService } from './mail.service.js'
 
 const getAllOrder = async () => {
   const orders = await OrderModel.aggregate([
@@ -209,18 +210,96 @@ const confirmOrder = async (id) => {
   if (!order) {
     throw new NotFoundError('Order not found')
   }
-  const status = await axios.get(`https://api-merchant.payos.vn/v2/payment-requests/199645/${id}`, {
+  const status = await axios.get(`https://api-merchant.payos.vn/v2/payment-requests/${id}`, {
     headers: {
       'Content-Type': 'application/json',
       'x-client-id': process.env.PAYOS_CLIENT_ID,
       'x-api-key': process.env.PAYOS_API_KEY
     }
   })
-  if (status.data.status === 'CANCELLED') {
-    return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'CANCELLED' })
+  if (status.data.data.status === 'CANCELLED') {
+    return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'CANCELLED' })
   }
-  if (status.data.status === 'SUCCESS') {
-    return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'SUCCESS' })
+  if (status.data.data.status === 'PAID') {
+    console.log(Number(id))
+    const result = await OrderModel.aggregate([
+      {
+        $match: { orderCode: Number(id) }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantId',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $lookup: {
+          from: 'tables',
+          localField: 'tableId',
+          foreignField: '_id',
+          as: 'table'
+        }
+      },
+      {
+        $unwind: '$table'
+      },
+      {
+        $project: {
+          _id: 1,
+          table: '$table',
+          user: '$user',
+          restaurant: '$restaurant',
+          totalPeople: 1,
+          name: 1,
+          phone_number: 1,
+          email: 1,
+          payment: 1,
+          menuList: 1,
+          checkin: 1,
+          orderCode: 1,
+          totalOrder: 1
+        }
+      }
+    ])
+    const subject = 'Xác nhận đơn hàng'
+    const html =
+      `<p>Đơn hàng của bạn đã được xác nhận</p>
+                  <p>Mã đơn hàng: ${result[0].orderCode}</p>
+                  <p>Ngày nhận bàn: ${Date(result[0].checkin).slice(0, 11)}</p>
+                  <p>Thời gian nhận bàn: ${Date(result[0].checkin).slice(11, 16)}</p>
+                  <p>Địa chỉ nhà hàng: ${result[0].restaurant.address}</p>
+                  <p>Địa chỉ email: ${result[0].user.email}</p>
+                  <p>Số điện thoại: ${result[0].phone_number}</p>
+                  <p>Người đặt: ${result[0].name}</p>
+                  <p>Số người: ${result[0].totalPeople}</p>
+                  <p>Phương thức thanh toán: ${result[0].payment}</p>
+                  <p>Menu: 
+                  ` +
+      result[0].menuList
+        .map((item) => `<p>${item.name} - ${Number(item.price).toFixed(0)} đ - ${item.quantity} - ${item.unit} </p>`)
+        .join('') +
+      `
+                  </p>
+                  <p>Tổng tiền: ${Number(result[0].totalOrder).toFixed(0).toLocaleString('vi-VN')} đ</p>
+                  `
+    MailService.sendMail({ to: result[0].user.email, subject, html })
+    return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
 const confirmDirectOrder = async (id) => {
@@ -237,7 +316,7 @@ const payDirectOrder = async (total) => {
     accountNo: process.env.BANK_ACCOUNT,
     accountName: 'THÁI NGỌC RẠNG',
     acqId: 970416,
-    amount: Number(total).toFixed(0),
+    amount: Math.ceil(Number(total)),
     addInfo: 'Thanh toán đơn hàng',
     format: 'text',
     template: 'print'
@@ -286,10 +365,10 @@ const payOrder = async ({ orderCode, total }) => {
   const YOUR_DOMAIN = 'http://localhost:5173'
   const body = {
     orderCode,
-    amount: Number(total).toFixed(0),
+    amount: Math.ceil(Number(total)),
     description: 'Thanh toán đơn hàng',
-    returnUrl: `${YOUR_DOMAIN}/checkout?step=3`,
-    cancelUrl: `${YOUR_DOMAIN}/checkout?step=3`
+    returnUrl: `${YOUR_DOMAIN}/checkout?step=1`,
+    cancelUrl: `${YOUR_DOMAIN}/checkout?step=1`
   }
   return await payOS.createPaymentLink(body)
 }
@@ -301,7 +380,61 @@ const deleteOrder = async (id) => {
   return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), { deletedAt: Date.now() })
 }
 const findSuccessfulOrders = async () => {
-  return await OrderModel.find({ status: 'ONHOLD' }).lean()
+  return await OrderModel.aggregate([
+    {
+      $match: { status: 'ONHOLD' }
+    },
+    {
+      $lookup: {
+        from: 'tables',
+        localField: 'tableId',
+        foreignField: '_id',
+        as: 'table'
+      }
+    },
+    {
+      $unwind: '$table'
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $unwind: '$user'
+    },
+    {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurantId',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
+      $project: {
+        _id: 1,
+        table: '$table',
+        user: '$user',
+        restaurant: '$restaurant',
+        totalPeople: 1,
+        name: 1,
+        phone_number: 1,
+        payment: 1,
+        menuList: 1,
+        status: 1,
+        checkin: 1,
+        orderCode: 1,
+        totalOrder: 1
+      }
+    }
+  ])
 }
 
 const findPendingCashOrders = async () => {
@@ -309,7 +442,61 @@ const findPendingCashOrders = async () => {
     payment: PAYMENT_METHOD.CASH,
     status: PAYMENT_STATUS.PENDING
   }
-  const orders = await OrderModel.find(query).lean()
+  const orders = await OrderModel.aggregate([
+    {
+      $match: query
+    },
+    {
+      $lookup: {
+        from: 'tables',
+        localField: 'tableId',
+        foreignField: '_id',
+        as: 'table'
+      }
+    },
+    {
+      $unwind: '$table'
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $unwind: '$user'
+    },
+    {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurantId',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
+      $project: {
+        _id: 1,
+        table: '$table',
+        user: '$user',
+        restaurant: '$restaurant',
+        totalPeople: 1,
+        name: 1,
+        phone_number: 1,
+        payment: 1,
+        menuList: 1,
+        status: 1,
+        checkin: 1,
+        orderCode: 1,
+        totalOrder: 1
+      }
+    }
+  ])
   return orders
 }
 const totalRevenueOrder = async () => {
