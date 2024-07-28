@@ -16,11 +16,6 @@ import { MailService } from './mail.service.js'
 const getAllOrder = async () => {
   const orders = await OrderModel.aggregate([
     {
-      $match: {
-        deletedAt: null
-      }
-    },
-    {
       $lookup: {
         from: 'tables',
         localField: 'tableId',
