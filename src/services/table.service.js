@@ -27,7 +27,7 @@ const getAllTable = async () => {
       $project: {
         _id: 1,
         restaurantId: 1,
-        restaurantName: '$restaurant.name',
+        restaurant: '$restaurant',
         name: 1,
         status: 1,
         createdAt: 1,
@@ -63,7 +63,7 @@ const getTableById = async (id) => {
         tableNumber: 1,
         price: 1,
         restaurantID: 1,
-        restaurantName: '$restaurant.name'
+        restaurant: '$restaurant'
       }
     }
   ])
