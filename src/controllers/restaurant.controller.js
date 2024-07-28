@@ -21,7 +21,10 @@ const getRestaurantById = async (req, res, next) => {
     const data = await RestaurantService.getRestaurantById(req.params.id)
     return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -34,7 +37,10 @@ const createRestaurant = async (req, res, next) => {
     const result = await RestaurantService.createRestaurant(req.user.id, req.body)
     return new Response(201, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 

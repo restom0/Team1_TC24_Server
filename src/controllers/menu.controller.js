@@ -13,21 +13,27 @@ const createMenuItem = async (req, res, next) => {
   }
 }
 
-const getAllMenuItems = async (req, res) => {
+const getAllMenuItems = async (req, res, next) => {
   try {
     const items = await MenuService.getAllMenuItems()
     return new Response(200, 'Thành Công', items).resposeHandler(res)
   } catch (error) {
-    return new Response(500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
-const getMenuItemById = async (req, res) => {
+const getMenuItemById = async (req, res, next) => {
   try {
     const item = await MenuService.getMenuItemById(req.params.id)
     return new Response(200, 'Thành Công', item).resposeHandler(res)
   } catch (error) {
-    return new Response(error.message === 'Không tìm thấy menu' ? 404 : 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -43,12 +49,15 @@ const updateMenuItemById = async (req, res, next) => {
   }
 }
 
-const deleteMenuItemById = async (req, res) => {
+const deleteMenuItemById = async (req, res, next) => {
   try {
     await MenuService.deleteMenuItemById(req.params.id)
     return new Response(200, 'Menu đã được xóa', null).resposeHandler(res)
   } catch (error) {
-    return new Response(error.message === 'Không tìm thấy menu' ? 404 : 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -64,7 +73,10 @@ const findMenuByAnyField = async (req, res, next) => {
     }
     return new Response(200, 'Đã tìm thấy bàn', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 

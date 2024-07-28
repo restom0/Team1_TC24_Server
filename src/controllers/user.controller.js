@@ -89,7 +89,10 @@ const sendResetPasswordEmail = async (req, res, next) => {
     const result = await MailService.sendResetPasswordMail(to)
     return new Response(200, 'Gửi thành công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -102,7 +105,9 @@ const getUserById = async (req, res, next) => {
     }
     new Response(200, 'Đã tìm thấy tài khoản', user).resposeHandler(res)
   } catch (error) {
-    new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
     next(error)
   }
 }
@@ -112,7 +117,9 @@ const getAllUsers = async (req, res, next) => {
     const users = await UserService.getAllUsers()
     new Response(200, 'Đã tìm thấy tài khoản', users).resposeHandler(res)
   } catch (error) {
-    new Response(500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
     next(error)
   }
 }
@@ -126,7 +133,9 @@ const deleteUser = async (req, res, next) => {
     }
     new Response(200, 'Xóa tài khoản thành công', null).resposeHandler(res)
   } catch (error) {
-    new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
     next(error)
   }
 }
@@ -137,7 +146,10 @@ const resetPassword = async (req, res, next) => {
     const result = await UserService.resetPassword(code, newPassword)
     return new Response(200, 'Đổi mật khẩu thành công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -153,7 +165,10 @@ const findUsersByAnyField = async (req, res, next) => {
     }
     return new Response(200, 'Đã tìm thấy tài khoản', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
