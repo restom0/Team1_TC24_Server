@@ -217,10 +217,10 @@ const confirmOrder = async (id) => {
       'x-api-key': process.env.PAYOS_API_KEY
     }
   })
-  if (status.data.status === 'CANCELLED') {
+  if (status.data.data.status === 'CANCELLED') {
     return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'CANCELLED' })
   }
-  if (status.data.status === 'SUCCESS') {
+  if (status.data.data.status === 'SUCCESS') {
     return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'SUCCESS' })
   }
 }
