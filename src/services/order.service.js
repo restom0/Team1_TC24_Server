@@ -238,7 +238,7 @@ const payDirectOrder = async (total) => {
     accountNo: process.env.BANK_ACCOUNT,
     accountName: 'THÁI NGỌC RẠNG',
     acqId: 970416,
-    amount: Number(total).toFixed(0),
+    amount: Math.ceil(Number(total)),
     addInfo: 'Thanh toán đơn hàng',
     format: 'text',
     template: 'print'
@@ -287,7 +287,7 @@ const payOrder = async ({ orderCode, total }) => {
   const YOUR_DOMAIN = 'http://localhost:5173'
   const body = {
     orderCode,
-    amount: Number(total).toFixed(0),
+    amount: Math.ceil(Number(total)),
     description: 'Thanh toán đơn hàng',
     returnUrl: `${YOUR_DOMAIN}/checkout?step=3`,
     cancelUrl: `${YOUR_DOMAIN}/checkout?step=3`
