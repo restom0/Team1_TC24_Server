@@ -104,7 +104,6 @@ const countUser = async () => {
 }
 
 const getUserById = async (id) => {
-  id = Types.ObjectId.createFromHexString(id)
   return await UserModel.findById(id)
 }
 
