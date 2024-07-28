@@ -12,6 +12,7 @@ import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
 
 import { check } from 'express-validator'
+import { MailService } from './mail.service.js'
 
 const getAllOrder = async () => {
   const orders = await OrderModel.aggregate([
@@ -221,6 +222,75 @@ const confirmOrder = async (id) => {
     return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'CANCELLED' })
   }
   if (status.data.data.status === 'SUCCESS') {
+    const result = await OrderModel.aggregate([
+      {
+        $match: { orderCode: order.orderCode }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantId',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'user'
+        }
+      },
+      {
+        $unwind: '$user'
+      },
+      {
+        $lookup: {
+          from: 'tables',
+          localField: 'tableId',
+          foreignField: '_id',
+          as: 'table'
+        }
+      },
+      {
+        $unwind: '$table'
+      },
+      {
+        $project: {
+          _id: 1,
+          table: '$table',
+          user: '$user',
+          restaurant: '$restaurant',
+          totalPeople: 1,
+          name: 1,
+          phone_number: 1,
+          email: 1,
+          payment: 1,
+          menuList: 1,
+          checkin: 1,
+          orderCode: 1,
+          totalOrder: 1
+        }
+      }
+    ])
+    const subject = 'Xác nhận đơn hàng'
+    const html = `<p>Đơn hàng của bạn đã được xác nhận</p>
+                  <p>Mã đơn hàng: ${result.orderCode}</p>
+                  <p>Thời gian nhận bàn: ${result.checkin}</p>
+                  <p>Địa chỉ nhà hàng: ${result.restaurant.address}</p>
+                  <p>Địa chỉ email: ${result.user.email}</p>
+                  <p>Số điện thoại: ${result.phone_number}</p>
+                  <p>Người đặt: ${result.name}</p>
+                  <p>Số người: ${result.totalPeople}</p>
+                  <p>Phương thức thanh toán: ${result.payment}</p>
+                  <p>Menu: ${result.menuList}</p>
+                  <p>Tổng tiền: ${result.totalOrder}</p>
+                  `
+    MailService.sendMail(result.user.email, subject, html)
     return await OrderModel.findByOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
