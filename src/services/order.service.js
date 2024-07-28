@@ -185,7 +185,7 @@ const createDirectOrder = async (
     checkin,
     orderCode: Number(String(new Date().getTime()).slice(-6)),
     restaurantId,
-    totalOrder: total
+    totalOrder: Number(total).toFixed(0)
   })
   if (payment === 'CREDIT_CARD') {
     const paymentLinkRes = await payDirectOrder({ orderCode: order.orderCode, total })
@@ -238,7 +238,7 @@ const payDirectOrder = async (total) => {
     accountNo: process.env.BANK_ACCOUNT,
     accountName: 'THÁI NGỌC RẠNG',
     acqId: 970416,
-    amount: total,
+    amount: Number(total).toFixed(0),
     addInfo: 'Thanh toán đơn hàng',
     format: 'text',
     template: 'print'
@@ -287,7 +287,7 @@ const payOrder = async ({ orderCode, total }) => {
   const YOUR_DOMAIN = 'http://localhost:5173'
   const body = {
     orderCode,
-    amount: Number(total),
+    amount: Number(total).toFixed(0),
     description: 'Thanh toán đơn hàng',
     returnUrl: `${YOUR_DOMAIN}/checkout?step=3`,
     cancelUrl: `${YOUR_DOMAIN}/checkout?step=3`
