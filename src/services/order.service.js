@@ -279,21 +279,28 @@ const confirmOrder = async (id) => {
       }
     ])
     const subject = 'Xác nhận đơn hàng'
-    const html = `<p>Đơn hàng của bạn đã được xác nhận</p>
+    const html =
+      `<p>Đơn hàng của bạn đã được xác nhận</p>
                   <p>Mã đơn hàng: ${result[0].orderCode}</p>
-                  <p>Ngày nhận bàn: ${result[0].checkin.slice(0, 11)}</p>
-                  <p>Thời gian nhận bàn: ${result[0].checkin.slice(11, 16)}</p>
+                  <p>Ngày nhận bàn: ${Date(result[0].checkin).slice(0, 11)}</p>
+                  <p>Thời gian nhận bàn: ${Date(result[0].checkin).slice(11, 16)}</p>
                   <p>Địa chỉ nhà hàng: ${result[0].restaurant.address}</p>
                   <p>Địa chỉ email: ${result[0].user.email}</p>
                   <p>Số điện thoại: ${result[0].phone_number}</p>
                   <p>Người đặt: ${result[0].name}</p>
                   <p>Số người: ${result[0].totalPeople}</p>
                   <p>Phương thức thanh toán: ${result[0].payment}</p>
-                  <p>Menu: ${result[0].menuList}</p>
-                  <p>Tổng tiền: ${result[0].totalOrder}</p>
+                  <p>Menu: 
+                  ` +
+      result[0].menuList
+        .map((item) => `<p>${item.name} - ${Number(item.price).toFixed(0)} đ - ${item.quantity} - ${item.unit} </p>`)
+        .join('') +
+      `
+                  </p>
+                  <p>Tổng tiền: ${Number(result[0].totalOrder).toFixed(0).toLocaleString('vi-VN')} đ</p>
                   `
-    console.log(MailService.sendMail(result[0].user.email, subject, html))
-    return await OrderModel.findByOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
+    MailService.sendMail({ to: result[0].user.email, subject, html })
+    return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
 const confirmDirectOrder = async (id) => {
