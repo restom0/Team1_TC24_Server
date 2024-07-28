@@ -11,8 +11,10 @@ const getAllRestaurant = async () => {
   return restaurants.map((restaurant) => new RestaurantDto(restaurant))
 }
 const getRestaurantById = async (id) => {
-  const restaurant = await RestaurantModel.find({ _id: Types.ObjectId.createFromHexString(id), deletedAt: null })
-  return new RestaurantDto(restaurant[0])
+  const restaurant = await RestaurantModel.find({
+    _id: Types.ObjectId.createFromHexString(id)
+  })
+  return restaurant.length > 0 ? new RestaurantDto(restaurant[0]) : null
 }
 
 const getLatLngFromAddress = async (address) => {
