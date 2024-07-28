@@ -8,7 +8,7 @@ import {
   RestaurantUpdateValidation
 } from '../dto/in/restaurant.dto.js'
 import { handleValidationErrors } from '../middlewares/validation.middleware.js'
-import { authentication, authenticationAdmin, requireApiKey } from '../middlewares/useApiKey.middleware.js'
+import { authenticationAdmin, requireApiKey } from '../middlewares/useApiKey.middleware.js'
 const RestaurantRouter = express.Router()
 
 RestaurantRouter.get('/', RestaurangGetAllValidation, handleValidationErrors, RestaurantController.getAllRestaurant)
