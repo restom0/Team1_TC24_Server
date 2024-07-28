@@ -222,9 +222,10 @@ const confirmOrder = async (id) => {
     return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'CANCELLED' })
   }
   if (status.data.data.status === 'PAID') {
+    console.log(Number(id))
     const result = await OrderModel.aggregate([
       {
-        $match: { orderCode: order.orderCode }
+        $match: { orderCode: Number(id) }
       },
       {
         $lookup: {
@@ -279,19 +280,19 @@ const confirmOrder = async (id) => {
     ])
     const subject = 'Xác nhận đơn hàng'
     const html = `<p>Đơn hàng của bạn đã được xác nhận</p>
-                  <p>Mã đơn hàng: ${result.orderCode}</p>
-                  <p>Thời gian nhận bàn: ${result.checkin}</p>
-                  <p>Địa chỉ nhà hàng: ${result.restaurant.address}</p>
-                  <p>Địa chỉ email: ${result.user.email}</p>
-                  <p>Số điện thoại: ${result.phone_number}</p>
-                  <p>Người đặt: ${result.name}</p>
-                  <p>Số người: ${result.totalPeople}</p>
-                  <p>Phương thức thanh toán: ${result.payment}</p>
-                  <p>Menu: ${result.menuList}</p>
-                  <p>Tổng tiền: ${result.totalOrder}</p>
+                  <p>Mã đơn hàng: ${result[0].orderCode}</p>
+                  <p>Ngày nhận bàn: ${result[0].checkin.slice(0, 11)}</p>
+                  <p>Thời gian nhận bàn: ${result[0].checkin.slice(11, 16)}</p>
+                  <p>Địa chỉ nhà hàng: ${result[0].restaurant.address}</p>
+                  <p>Địa chỉ email: ${result[0].user.email}</p>
+                  <p>Số điện thoại: ${result[0].phone_number}</p>
+                  <p>Người đặt: ${result[0].name}</p>
+                  <p>Số người: ${result[0].totalPeople}</p>
+                  <p>Phương thức thanh toán: ${result[0].payment}</p>
+                  <p>Menu: ${result[0].menuList}</p>
+                  <p>Tổng tiền: ${result[0].totalOrder}</p>
                   `
-
-    console.log(MailService.sendMail(result.user.email, subject, html))
+    console.log(MailService.sendMail(result[0].user.email, subject, html))
     return await OrderModel.findByOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
