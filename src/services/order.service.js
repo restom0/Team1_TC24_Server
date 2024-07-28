@@ -5,7 +5,6 @@ import { NotFoundError } from '../errors/notFound.error.js'
 import { OrderModel } from '../models/orders.model.js'
 import mongoose, { Types } from 'mongoose'
 import { BadRequestError } from '../errors/badRequest.error.js'
-import { OrderDto } from '../dto/response/order.dto.js'
 import { payOS } from '../configs/payos.config.js'
 import { PAYMENT_METHOD } from '../constants/payment_method.constant.js'
 import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
@@ -73,7 +72,7 @@ const getAllOrder = async () => {
   ])
   const list = []
   for (const order of orders) {
-    list.push(OrderDto(order))
+    list.push(order)
   }
   return list
 }
@@ -139,7 +138,7 @@ const getOrderById = async (id) => {
   ])
   const list = []
   for (const order of orders) {
-    list.push(OrderDto(order))
+    list.push(order)
   }
   return list
 }
@@ -316,7 +315,7 @@ const findPendingCashOrders = async () => {
 const totalRevenueOrder = async () => {
   const result = await OrderModel.aggregate([
     {
-      $match: { status: 'COMPLETE' }
+      $match: { status: 'COMPLETED' }
     },
     {
       $group: {
@@ -341,7 +340,7 @@ const countCompletedOrders = async () => {
     }
   ])
 
-  if (Array.isArray(result) && result.length > 0) {
+  if (result.length > 0) {
     return result[0].completedOrders
   } else {
     return 0
