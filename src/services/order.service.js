@@ -8,7 +8,7 @@ import { BadRequestError } from '../errors/badRequest.error.js'
 import { OrderDto } from '../dto/response/order.dto.js'
 import { payOS } from '../configs/payos.config.js'
 import { PAYMENT_METHOD } from '../constants/payment_method.constant.js'
-import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
+import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
 import { check } from 'express-validator'
 
 const getAllOrder = async () => {
