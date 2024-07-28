@@ -62,7 +62,8 @@ const getAllOrder = async () => {
         status: 1,
         checkin: 1,
         orderCode: 1,
-        checkout: 1
+        checkout: 1,
+        totalOrder: 1
       }
     }
   ])
@@ -346,9 +347,10 @@ const updateCheckin = async (id) => {
   const order = await OrderModel.find({
     $or: [
       { _id: id, status: PAYMENT_STATUS.SUCCESS },
-      { _id: id, status: PAYMENT_STATUS.PENDING, method: PAYMENT_METHOD.CASH }
+      { _id: id, status: PAYMENT_STATUS.PENDING, payment: PAYMENT_METHOD.CASH }
     ]
   })
+  console.log(id)
   if (order.length === 0) {
     throw new NotFoundError('Order not found')
   }
