@@ -8,7 +8,7 @@ import {
   RestaurantUpdateValidation
 } from '../dto/in/restaurant.dto.js'
 import { handleValidationErrors } from '../middlewares/validation.middleware.js'
-import { authentication, requireApiKey } from '../middlewares/useApiKey.middleware.js'
+import { authentication, authenticationAdmin, requireApiKey } from '../middlewares/useApiKey.middleware.js'
 const RestaurantRouter = express.Router()
 
 RestaurantRouter.get('/', RestaurangGetAllValidation, handleValidationErrors, RestaurantController.getAllRestaurant)
@@ -23,22 +23,26 @@ RestaurantRouter.post(
   RestaurantCreateValidation,
   handleValidationErrors,
   requireApiKey,
-  authentication,
+  authenticationAdmin,
   RestaurantController.createRestaurant
 )
 RestaurantRouter.put(
   '/restaurant/:id',
   RestaurantUpdateValidation,
   handleValidationErrors,
+  requireApiKey,
+  authenticationAdmin,
   RestaurantController.updateRestaurant
 )
 RestaurantRouter.delete(
   '/restaurant/:id',
   RestaurantDeleteValidation,
   handleValidationErrors,
+  requireApiKey,
+  authenticationAdmin,
   RestaurantController.deleteRestaurant
 )
 RestaurantRouter.post('/find-restaurant', RestaurantController.findRestaurantByAnyField)
-RestaurantRouter.get('/total-restaurant', RestaurantController.countRestaurant)
+RestaurantRouter.get('/total-restaurant', requireApiKey, authenticationAdmin, RestaurantController.countRestaurant)
 
 export { RestaurantRouter }

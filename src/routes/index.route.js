@@ -1,4 +1,4 @@
-import { requireApiKey } from '../middlewares/useApiKey.middleware.js'
+import { authenticationAdmin, requireApiKey } from '../middlewares/useApiKey.middleware.js'
 import { LogRouter } from './log.route.js'
 import MenuRouter from './menu.route.js'
 import { OrderRouter } from './order.route.js'
@@ -8,7 +8,7 @@ import { TableRouter } from './table.route.js'
 import { UserRouter } from './user.route.js'
 
 const route = (app) => {
-  app.use('/logs', requireApiKey, LogRouter)
+  app.use('/logs', requireApiKey, authenticationAdmin, LogRouter)
 
   app.use('/restaurants', RestaurantRouter)
 
@@ -18,7 +18,7 @@ const route = (app) => {
 
   app.use('/menus', MenuRouter)
 
-  app.use('/stats', StatRouter)
+  app.use('/stats', requireApiKey, authenticationAdmin, StatRouter)
 
   app.use('/', UserRouter)
 }

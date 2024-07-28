@@ -9,7 +9,7 @@ import { UnAuthorizedError } from '../errors/unauthorizedRequest.error.js'
 export const createApiKey = (data) => {
   const token = jwt.sign(
     {
-      exp: Math.floor(Date.now() / 1000) + 8 * 60 * 60,
+      exp: Math.floor(Date.now() / 1000) + 8 * 60 * 60000,
       data
     },
     'secret'
@@ -25,7 +25,7 @@ export const requireApiKey = async (req, res, next) => {
 
     jwt.verify(apiKey, 'secret', async (err, decoded) => {
       if (err || !decoded) {
-        throw new ForbiddenRequestError('Invalid access')
+        throw new UnAuthorizedError('Invalid access')
       } else {
         const result = await UserService.authorize(decoded.data)
         if (CommonUtils.checkNullOrUndefined(result)) {
@@ -43,7 +43,7 @@ export const requireApiKey = async (req, res, next) => {
   }
 }
 
-export const authentication = async (req, res, next) => {
+export const authenticationAdmin = async (req, res, next) => {
   try {
     if (
       CommonUtils.checkNullOrUndefined(req.user) ||
@@ -53,7 +53,24 @@ export const authentication = async (req, res, next) => {
       throw new UnAuthorizedError('Invalid access')
     }
     if (req.user.role !== 'RESTAURANT_OWNER') {
-      throw new ForbiddenRequestError('Invalid access')
+      throw new UnAuthorizedError('Invalid access')
+    }
+    next()
+  } catch (error) {
+    next(error)
+  }
+}
+export const authenticationStaff = async (req, res, next) => {
+  try {
+    if (
+      CommonUtils.checkNullOrUndefined(req.user) ||
+      CommonUtils.checkNullOrUndefined(req.user.role) ||
+      CommonUtils.checkNullOrUndefined(req.user.id)
+    ) {
+      throw new UnAuthorizedError('Invalid access')
+    }
+    if (req.user.role !== 'STAFF' || req.user.role !== 'RESTAURANT_OWNER') {
+      throw new UnAuthorizedError('Invalid access')
     }
     next()
   } catch (error) {

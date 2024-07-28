@@ -8,14 +8,20 @@ import {
   OrderUpdateValidation
 } from '../dto/in/order.dto.js'
 import { handleValidationErrors } from '../middlewares/validation.middleware.js'
-import { requireApiKey } from '../middlewares/useApiKey.middleware.js'
+import { authenticationAdmin, authenticationStaff, requireApiKey } from '../middlewares/useApiKey.middleware.js'
 const OrderRouter = express.Router()
 
-OrderRouter.get('/', OrderGetAllValidation, handleValidationErrors, OrderController.getAllOrder)
+OrderRouter.get('/', OrderGetAllValidation, handleValidationErrors, requireApiKey, OrderController.getAllOrder)
 OrderRouter.get('/order/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.getOrderById)
-OrderRouter.get('/confirm/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.confirmOrder)
-OrderRouter.get('/direct/confirm/:id', OrderController.confirmDirectOrder)
-OrderRouter.post('/pay/:id', OrderGetByIdValidation, handleValidationErrors, OrderController.payOrder)
+OrderRouter.get(
+  '/confirm/:id',
+  requireApiKey,
+  OrderGetByIdValidation,
+  handleValidationErrors,
+  OrderController.confirmOrder
+)
+OrderRouter.get('/direct/confirm/:id', requireApiKey, OrderController.confirmDirectOrder)
+OrderRouter.post('/pay/:id', requireApiKey, OrderGetByIdValidation, handleValidationErrors, OrderController.payOrder)
 OrderRouter.post('/', requireApiKey, OrderCreateValidation, handleValidationErrors, OrderController.createOrder)
 OrderRouter.post(
   '/direct',
@@ -25,16 +31,23 @@ OrderRouter.post(
   OrderController.createDirectOrder
 )
 
-OrderRouter.put('/menu/:id', OrderUpdateValidation, handleValidationErrors, OrderController.updateOrder)
+OrderRouter.put(
+  '/menu/:id',
+  requireApiKey,
+  authenticationStaff,
+  OrderUpdateValidation,
+  handleValidationErrors,
+  OrderController.updateOrder
+)
 OrderRouter.delete('/:id', OrderDeleteValidation, handleValidationErrors, OrderController.deleteOrder)
-OrderRouter.put('/checkout/:id', OrderController.updateCheckout)
-OrderRouter.put('/checkin/:id', OrderController.updateCheckin)
+OrderRouter.put('/checkout/:id', requireApiKey, authenticationStaff, OrderController.updateCheckout)
+OrderRouter.put('/checkin/:id', requireApiKey, authenticationStaff, OrderController.updateCheckin)
 
-OrderRouter.get('/checkout', OrderController.getSuccessfulOrders)
-OrderRouter.get('/checkin', OrderController.getPendingCashOrders)
-OrderRouter.get('/total-revenue', OrderController.totalRevenueOrder)
-OrderRouter.get('/total-order-complete', OrderController.countCompletedOrders)
-OrderRouter.get('/total-order', OrderController.countOrder)
-OrderRouter.get('/total-order-hold', OrderController.countOrdersByStatus)
-OrderRouter.get('/retaurant-name', OrderController.getMostFrequentRestaurantName)
+OrderRouter.get('/checkout', requireApiKey, authenticationStaff, OrderController.getSuccessfulOrders)
+OrderRouter.get('/checkin', requireApiKey, authenticationStaff, OrderController.getPendingCashOrders)
+OrderRouter.get('/total-revenue', requireApiKey, authenticationAdmin, OrderController.totalRevenueOrder)
+OrderRouter.get('/total-order-complete', requireApiKey, authenticationAdmin, OrderController.countCompletedOrders)
+OrderRouter.get('/total-order', requireApiKey, authenticationAdmin, OrderController.countOrder)
+OrderRouter.get('/total-order-hold', requireApiKey, authenticationAdmin, OrderController.countOrdersByStatus)
+OrderRouter.get('/retaurant-name', requireApiKey, authenticationAdmin, OrderController.getMostFrequentRestaurantName)
 export { OrderRouter }
