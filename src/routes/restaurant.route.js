@@ -13,7 +13,7 @@ const RestaurantRouter = express.Router()
 
 RestaurantRouter.get('/', RestaurangGetAllValidation, handleValidationErrors, RestaurantController.getAllRestaurant)
 RestaurantRouter.get(
-  '/restaurnt/:id',
+  '/restaurant/:id',
   RestaurantGetByIdValidation,
   handleValidationErrors,
   RestaurantController.getRestaurantById
