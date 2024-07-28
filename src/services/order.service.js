@@ -289,8 +289,8 @@ const payOrder = async ({ orderCode, total }) => {
     orderCode,
     amount: Math.ceil(Number(total)),
     description: 'Thanh toán đơn hàng',
-    returnUrl: `${YOUR_DOMAIN}/checkout?step=3`,
-    cancelUrl: `${YOUR_DOMAIN}/checkout?step=3`
+    returnUrl: `${YOUR_DOMAIN}/checkout?step=1`,
+    cancelUrl: `${YOUR_DOMAIN}/checkout?step=1`
   }
   return await payOS.createPaymentLink(body)
 }
