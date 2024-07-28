@@ -5,7 +5,7 @@ import { NotFoundError } from '../errors/notFound.error.js'
 import { RestaurantService } from '../services/restaurant.service.js'
 import { CommonUtils } from '../utils/common.util.js'
 
-const getAllRestaurant = async (req, res) => {
+const getAllRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getAllRestaurant()
@@ -15,7 +15,7 @@ const getAllRestaurant = async (req, res) => {
   }
 }
 
-const getRestaurantById = async (req, res) => {
+const getRestaurantById = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getRestaurantById(req.params.id)
@@ -25,7 +25,7 @@ const getRestaurantById = async (req, res) => {
   }
 }
 
-const createRestaurant = async (req, res) => {
+const createRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
@@ -38,7 +38,7 @@ const createRestaurant = async (req, res) => {
   }
 }
 
-const updateRestaurant = async (req, res) => {
+const updateRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     if (CommonUtils.checkNullOrUndefined(req.body)) {
@@ -47,37 +47,49 @@ const updateRestaurant = async (req, res) => {
     const result = await RestaurantService.updateRestaurant(req.params.id, req.body)
     return new Response(200, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
-const deleteRestaurant = async (req, res) => {
+const deleteRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const result = await RestaurantService.deleteRestaurant(req.params.id)
     return new Response(HttpStatusCode.Accepted, 'Thành Công', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
-const getFourNearestRestaurant = async (req, res) => {
+const getFourNearestRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getFourNearestRestaurant(req.query)
     return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
-const getDistanceFromRestaurant = async (req, res) => {
+const getDistanceFromRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getDistanceFromRestaurant(req.query)
     return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
@@ -93,7 +105,10 @@ const findRestaurantByAnyField = async (req, res, next) => {
     }
     return new Response(200, 'Đã tìm thấy nhà hàng', result).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
   }
 }
 
