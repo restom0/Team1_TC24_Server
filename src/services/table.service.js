@@ -31,7 +31,10 @@ const getAllTable = async () => {
         name: 1,
         status: 1,
         createdAt: 1,
-        updatedAt: 1
+        updatedAt: 1,
+        tableNumber: 1,
+        peopleAmount: 1,
+        price: 1
       }
     }
   ])
