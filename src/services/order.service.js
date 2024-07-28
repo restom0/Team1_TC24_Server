@@ -381,7 +381,61 @@ const deleteOrder = async (id) => {
   return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), { deletedAt: Date.now() })
 }
 const findSuccessfulOrders = async () => {
-  return await OrderModel.find({ status: 'ONHOLD' }).lean()
+  return await OrderModel.aggregate([
+    {
+      $match: { status: 'ONHOLD' }
+    },
+    {
+      $lookup: {
+        from: 'tables',
+        localField: 'tableId',
+        foreignField: '_id',
+        as: 'table'
+      }
+    },
+    {
+      $unwind: '$table'
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $unwind: '$user'
+    },
+    {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurantId',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
+      $project: {
+        _id: 1,
+        table: '$table',
+        user: '$user',
+        restaurant: '$restaurant',
+        totalPeople: 1,
+        name: 1,
+        phone_number: 1,
+        payment: 1,
+        menuList: 1,
+        status: 1,
+        checkin: 1,
+        orderCode: 1,
+        totalOrder: 1
+      }
+    }
+  ])
 }
 
 const findPendingCashOrders = async () => {
@@ -389,7 +443,61 @@ const findPendingCashOrders = async () => {
     payment: PAYMENT_METHOD.CASH,
     status: PAYMENT_STATUS.PENDING
   }
-  const orders = await OrderModel.find(query).lean()
+  const orders = await OrderModel.aggregate([
+    {
+      $match: query
+    },
+    {
+      $lookup: {
+        from: 'tables',
+        localField: 'tableId',
+        foreignField: '_id',
+        as: 'table'
+      }
+    },
+    {
+      $unwind: '$table'
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'userId',
+        foreignField: '_id',
+        as: 'user'
+      }
+    },
+    {
+      $unwind: '$user'
+    },
+    {
+      $lookup: {
+        from: 'restaurants',
+        localField: 'restaurantId',
+        foreignField: '_id',
+        as: 'restaurant'
+      }
+    },
+    {
+      $unwind: '$restaurant'
+    },
+    {
+      $project: {
+        _id: 1,
+        table: '$table',
+        user: '$user',
+        restaurant: '$restaurant',
+        totalPeople: 1,
+        name: 1,
+        phone_number: 1,
+        payment: 1,
+        menuList: 1,
+        status: 1,
+        checkin: 1,
+        orderCode: 1,
+        totalOrder: 1
+      }
+    }
+  ])
   return orders
 }
 const totalRevenueOrder = async () => {
