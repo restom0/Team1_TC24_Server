@@ -98,8 +98,7 @@ const sendResetPasswordEmail = async (req, res, next) => {
 
 const getUserById = async (req, res, next) => {
   try {
-    const { id } = req.params
-    const user = await UserService.getUserById(id)
+    const user = await UserService.getUserById(req.user.id)
     if (!user) {
       throw new BadRequestError('Không thấy tài khoản')
     }
