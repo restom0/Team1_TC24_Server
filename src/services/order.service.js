@@ -218,10 +218,10 @@ const confirmOrder = async (id) => {
     }
   })
   if (status.data.data.status === 'CANCELLED') {
-    return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'CANCELLED' })
+    return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'CANCELLED' })
   }
   if (status.data.data.status === 'SUCCESS') {
-    return await OrderModel.findByIdAndUpdate(order.orderCode, { status: 'SUCCESS' })
+    return await OrderModel.findByOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
 const confirmDirectOrder = async (id) => {
