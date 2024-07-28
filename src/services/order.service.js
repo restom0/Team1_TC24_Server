@@ -9,6 +9,8 @@ import { OrderDto } from '../dto/response/order.dto.js'
 import { payOS } from '../configs/payos.config.js'
 import { PAYMENT_METHOD } from '../constants/payment_method.constant.js'
 import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
+import { RestaurantModel } from '../models/restaurants.model.js'
+
 import { check } from 'express-validator'
 
 const getAllOrder = async () => {
@@ -311,6 +313,86 @@ const findPendingCashOrders = async () => {
   const orders = await OrderModel.find(query).lean()
   return orders
 }
+const totalRevenueOrder = async () => {
+  const result = await OrderModel.aggregate([
+    {
+      $match: { status: 'COMPLETE' }
+    },
+    {
+      $group: {
+        _id: null,
+        totalPrice: { $sum: '$totalOrder' }
+      }
+    }
+  ])
+  if (result.length > 0) {
+    return result[0].totalPrice
+  } else {
+    return 0
+  }
+}
+const countCompletedOrders = async () => {
+  const result = await OrderModel.aggregate([
+    {
+      $match: { status: 'COMPLETED' }
+    },
+    {
+      $count: 'completedOrders'
+    }
+  ])
+
+  if (Array.isArray(result) && result.length > 0) {
+    return result[0].completedOrders
+  } else {
+    return 0
+  }
+}
+const countOrder = async () => {
+  return await OrderModel.countDocuments({ deletedAt: null })
+}
+const countOrdersByStatus = async (req, res) => {
+  const result = await OrderModel.aggregate([
+    {
+      $match: { status: { $in: ['PENDING', 'ONHOLD', 'SUCCESS'] } }
+    },
+    {
+      $count: 'orderCount'
+    }
+  ])
+
+  if (result.length > 0) {
+    return result[0].orderCount
+  } else {
+    return 0
+  }
+}
+
+const getMostFrequentRestaurantName = async () => {
+  const result = await OrderModel.aggregate([
+    {
+      $group: {
+        _id: '$restaurantId',
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { count: -1 }
+    },
+    {
+      $limit: 1
+    }
+  ])
+
+  if (result.length > 0) {
+    const mostFrequentRestaurant = result[0]
+
+    const restaurant = await RestaurantModel.findById(mostFrequentRestaurant._id).select('name')
+
+    return restaurant ? restaurant.name : null
+  } else {
+    return null
+  }
+}
 
 export const OrderService = {
   getAllOrder,
@@ -325,5 +407,10 @@ export const OrderService = {
   updateCheckin,
   updateCheckout,
   findSuccessfulOrders,
-  findPendingCashOrders
+  findPendingCashOrders,
+  totalRevenueOrder,
+  countCompletedOrders,
+  countOrder,
+  countOrdersByStatus,
+  getMostFrequentRestaurantName
 }

@@ -32,4 +32,9 @@ OrderRouter.put('/checkin/:id', OrderController.updateCheckin)
 
 OrderRouter.get('/checkout', OrderController.getSuccessfulOrders)
 OrderRouter.get('/checkin', OrderController.getPendingCashOrders)
+OrderRouter.get('/total-revenue', OrderController.totalRevenueOrder)
+OrderRouter.get('/total-order-complete', OrderController.countCompletedOrders)
+OrderRouter.get('/total-order', OrderController.countOrder)
+OrderRouter.get('/total-order-hold', OrderController.countOrdersByStatus)
+OrderRouter.get('/retaurant-name', OrderController.getMostFrequentRestaurantName)
 export { OrderRouter }

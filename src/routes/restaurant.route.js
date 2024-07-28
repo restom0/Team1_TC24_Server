@@ -13,7 +13,7 @@ const RestaurantRouter = express.Router()
 
 RestaurantRouter.get('/', RestaurangGetAllValidation, handleValidationErrors, RestaurantController.getAllRestaurant)
 RestaurantRouter.get(
-  '/:id',
+  '/restaurant/:id',
   RestaurantGetByIdValidation,
   handleValidationErrors,
   RestaurantController.getRestaurantById
@@ -26,13 +26,19 @@ RestaurantRouter.post(
   authentication,
   RestaurantController.createRestaurant
 )
-RestaurantRouter.put('/:id', RestaurantUpdateValidation, handleValidationErrors, RestaurantController.updateRestaurant)
+RestaurantRouter.put(
+  '/restaurant/:id',
+  RestaurantUpdateValidation,
+  handleValidationErrors,
+  RestaurantController.updateRestaurant
+)
 RestaurantRouter.delete(
-  '/:id',
+  '/restaurant/:id',
   RestaurantDeleteValidation,
   handleValidationErrors,
   RestaurantController.deleteRestaurant
 )
 RestaurantRouter.post('/find-restaurant', RestaurantController.findRestaurantByAnyField)
+RestaurantRouter.get('/total-restaurant', RestaurantController.countRestaurant)
 
 export { RestaurantRouter }

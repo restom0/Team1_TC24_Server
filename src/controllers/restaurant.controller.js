@@ -118,6 +118,17 @@ const findRestaurantByAnyField = async (req, res, next) => {
   }
 }
 
+const countRestaurant = async (req, res, next) => {
+  try {
+    const result = await RestaurantService.countRestaurant()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
 export const RestaurantController = {
   getAllRestaurant,
   getRestaurantById,
@@ -125,5 +136,6 @@ export const RestaurantController = {
   updateRestaurant,
   deleteRestaurant,
   getFourNearestRestaurant,
-  findRestaurantByAnyField
+  findRestaurantByAnyField,
+  countRestaurant
 }

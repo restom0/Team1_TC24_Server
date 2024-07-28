@@ -183,6 +183,62 @@ const getPendingCashOrders = async (req, res, next) => {
     next(error)
   }
 }
+const totalRevenueOrder = async (req, res, next) => {
+  try {
+    const result = await OrderService.totalRevenueOrder()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+const countCompletedOrders = async (req, res, next) => {
+  try {
+    const result = await OrderService.countCompletedOrders()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+const countOrder = async (req, res, next) => {
+  try {
+    const result = await OrderService.countOrder()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+
+const countOrdersByStatus = async (req, res, next) => {
+  try {
+    const result = await OrderService.countOrdersByStatus()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
+const getMostFrequentRestaurantName = async (req, res, next) => {
+  try {
+    const result = await OrderService.getMostFrequentRestaurantName()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
 
 export const OrderController = {
   getAllOrder,
@@ -198,5 +254,10 @@ export const OrderController = {
   updateCheckin,
   updateCheckout,
   getSuccessfulOrders,
-  getPendingCashOrders
+  getPendingCashOrders,
+  totalRevenueOrder,
+  countCompletedOrders,
+  countOrder,
+  countOrdersByStatus,
+  getMostFrequentRestaurantName
 }
