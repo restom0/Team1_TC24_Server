@@ -90,6 +90,9 @@ const findMenuItemsByAnyField = async (searchTerm) => {
 
   return await MenuItem.find(query).lean()
 }
+const countMenu = async () => {
+  return await MenuItem.countDocuments()
+}
 
 export const MenuService = {
   createMenuItem,
@@ -97,5 +100,6 @@ export const MenuService = {
   getMenuItemById,
   updateMenuItemById,
   deleteMenuItemById,
-  findMenuItemsByAnyField
+  findMenuItemsByAnyField,
+  countMenu
 }

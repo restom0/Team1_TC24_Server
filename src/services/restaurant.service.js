@@ -226,6 +226,11 @@ const findRestaurantsByAnyField = async (searchTerm) => {
 
   return await RestaurantModel.find(query).lean()
 }
+const countRestaurant = async () => {
+  const result = await RestaurantModel.countDocuments()
+
+  return result
+}
 export const RestaurantService = {
   getAllRestaurant,
   getRestaurantById,
@@ -234,5 +239,6 @@ export const RestaurantService = {
   deleteRestaurant,
   getFourNearestRestaurant,
   getDistanceFromRestaurant,
-  findRestaurantsByAnyField
+  findRestaurantsByAnyField,
+  countRestaurant
 }

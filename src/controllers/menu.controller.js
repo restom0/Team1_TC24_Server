@@ -67,6 +67,17 @@ const findMenuByAnyField = async (req, res, next) => {
     return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }
 }
+const countMenu = async (req, res, next) => {
+  try {
+    const result = await MenuService.countMenu()
+    return new Response(200, 'Thành Công', result).resposeHandler(res)
+  } catch (error) {
+    if (!res.headersSent) {
+      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    }
+    next(error)
+  }
+}
 
 export const MenuController = {
   createMenuItem,
@@ -74,5 +85,6 @@ export const MenuController = {
   getMenuItemById,
   updateMenuItemById,
   deleteMenuItemById,
-  findMenuByAnyField
+  findMenuByAnyField,
+  countMenu
 }
