@@ -210,7 +210,7 @@ const confirmOrder = async (id) => {
   if (!order) {
     throw new NotFoundError('Order not found')
   }
-  const status = await axios.get(`https://api-merchant.payos.vn/v2/payment-requests/199645/${id}`, {
+  const status = await axios.get(`https://api-merchant.payos.vn/v2/payment-requests/${id}`, {
     headers: {
       'Content-Type': 'application/json',
       'x-client-id': process.env.PAYOS_CLIENT_ID,
