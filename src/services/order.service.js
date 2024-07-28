@@ -221,7 +221,7 @@ const confirmOrder = async (id) => {
   if (status.data.data.status === 'CANCELLED') {
     return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'CANCELLED' })
   }
-  if (status.data.data.status === 'SUCCESS') {
+  if (status.data.data.status === 'PAID') {
     const result = await OrderModel.aggregate([
       {
         $match: { orderCode: order.orderCode }
@@ -290,7 +290,8 @@ const confirmOrder = async (id) => {
                   <p>Menu: ${result.menuList}</p>
                   <p>Tổng tiền: ${result.totalOrder}</p>
                   `
-    MailService.sendMail(result.user.email, subject, html)
+
+    console.log(MailService.sendMail(result.user.email, subject, html))
     return await OrderModel.findByOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
