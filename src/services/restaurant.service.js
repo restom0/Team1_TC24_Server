@@ -5,6 +5,8 @@ import { RestaurantModel } from '../models/restaurants.model.js'
 import mongoose, { Types } from 'mongoose'
 import RestaurantDto from '../dto/response/restaurant.dto.js'
 import { GOOGLE_CONFIG } from '../configs/google.config.js'
+import { TableModel } from '../models/tables.model.js'
+import MenuItem from '../models/menus.model.js'
 
 const getAllRestaurant = async () => {
   const restaurants = await RestaurantModel.find({ deletedAt: null })
@@ -21,9 +23,7 @@ const getRestaurantById = async (id) => {
         as: 'owner'
       }
     },
-    {
-      $unwind: '$owner'
-    },
+    { $unwind: '$owner' },
     {
       $project: {
         _id: 1,
@@ -37,20 +37,24 @@ const getRestaurantById = async (id) => {
         slider2: 1,
         slider3: 1,
         slider4: 1,
-        public_id_avatar: 1,
-        public_id_slider1: 1,
-        public_id_slider2: 1,
-        public_id_slider3: 1,
-        public_id_slider4: 1,
         owner: {
           _id: 1,
-          username: 1,
-          email: 1
+          name: 1,
+          email: 1,
+          phone: 1
         }
       }
     }
   ])
-  return restaurant.length > 0 ? new RestaurantDto(restaurant[0]) : null
+  const tables = await TableModel.find({ restaurantID: Types.ObjectId.createFromHexString(id), deletedAt: null })
+  const menus = await MenuItem.find({ restaurant_id: Types.ObjectId.createFromHexString(id), deletedAt: null })
+  return restaurant.length > 0
+    ? {
+        restaurant: new RestaurantDto(restaurant[0]),
+        tables: tables[0],
+        menus
+      }
+    : null
 }
 
 const getLatLngFromAddress = async (address) => {
