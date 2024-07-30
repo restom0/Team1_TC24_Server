@@ -51,7 +51,7 @@ const getRestaurantById = async (id) => {
   return restaurant.length > 0
     ? {
         restaurant: new RestaurantDto(restaurant[0]),
-        tables: tables[0],
+        tables,
         menus
       }
     : null
