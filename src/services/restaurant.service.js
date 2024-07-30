@@ -11,9 +11,45 @@ const getAllRestaurant = async () => {
   return restaurants.map((restaurant) => new RestaurantDto(restaurant))
 }
 const getRestaurantById = async (id) => {
-  const restaurant = await RestaurantModel.find({
-    _id: Types.ObjectId.createFromHexString(id)
-  })
+  const restaurant = await RestaurantModel.aggregate([
+    { $match: { _id: Types.ObjectId.createFromHexString(id), deletedAt: null } },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'owner_id',
+        foreignField: '_id',
+        as: 'owner'
+      }
+    },
+    {
+      $unwind: '$owner'
+    },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        address: 1,
+        openTime: 1,
+        closeTime: 1,
+        description: 1,
+        imageUrls: 1,
+        slider1: 1,
+        slider2: 1,
+        slider3: 1,
+        slider4: 1,
+        public_id_avatar: 1,
+        public_id_slider1: 1,
+        public_id_slider2: 1,
+        public_id_slider3: 1,
+        public_id_slider4: 1,
+        owner: {
+          _id: 1,
+          username: 1,
+          email: 1
+        }
+      }
+    }
+  ])
   return restaurant.length > 0 ? new RestaurantDto(restaurant[0]) : null
 }
 
