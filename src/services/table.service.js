@@ -141,11 +141,13 @@ const findTablesByAnyField = async (searchTerm) => {
 
   const query = {
     $or: [
-      ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
+      ...(isObjectId
+        ? [{ _id: Types.ObjectId.isValid(searchTerm) ? null : Types.ObjectId.createFromHexString(searchTerm) }]
+        : []),
       { tableNumber: isNaN(searchTerm) ? null : searchTerm },
       { peopleAmount: isNaN(searchTerm) ? null : searchTerm },
       { price: isNaN(searchTerm) ? null : searchTerm },
-      { restaurantID: isObjectId ? new mongoose.Types.ObjectId(searchTerm) : null }
+      { restaurantID: Types.ObjectId.isValid(searchTerm) ? null : Types.ObjectId.createFromHexString(searchTerm) }
     ]
   }
 
@@ -159,8 +161,8 @@ const getAllTableByFilterAndSort = async (upper, lower, sort, page) => {
           deletedAt: { $eq: null },
           $expr: {
             $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, lower] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, upper] }
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
             ]
           }
         }
@@ -177,19 +179,26 @@ const getAllTableByFilterAndSort = async (upper, lower, sort, page) => {
         $unwind: '$restaurant'
       },
       {
+        $group: {
+          _id: '$restaurantID',
+          restaurant: { $first: '$restaurant' },
+          name: { $first: '$name' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          tableNumber: { $first: '$tableNumber' },
+          peopleAmount: { $first: '$peopleAmount' },
+          price: { $first: '$price' }
+        }
+      },
+      {
         $sort: { createdAt: -1 }
       },
       {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      },
-      {
         $project: {
-          _id: 1,
-          restaurantId: 1,
-          restaurant: '$restaurant',
+          _id: 0,
+          restaurantId: '$_id', // Renaming _id to restaurantId
+          restaurant: 1,
           name: 1,
           status: 1,
           createdAt: 1,
@@ -198,6 +207,329 @@ const getAllTableByFilterAndSort = async (upper, lower, sort, page) => {
           peopleAmount: 1,
           price: 1
         }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      }
+    ])
+  } else if (sort === 'old') {
+    return await TableModel.aggregate([
+      {
+        $match: {
+          deletedAt: { $eq: null },
+          $expr: {
+            $and: [
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantID',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $group: {
+          _id: '$restaurantID',
+          restaurant: { $first: '$restaurant' },
+          name: { $first: '$name' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          tableNumber: { $first: '$tableNumber' },
+          peopleAmount: { $first: '$peopleAmount' },
+          price: { $first: '$price' }
+        }
+      },
+      {
+        $sort: { createdAt: 1 }
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: '$_id',
+          restaurant: 1,
+          name: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          tableNumber: 1,
+          peopleAmount: 1,
+          price: 1
+        }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      }
+    ])
+  } else if (sort === 'A->Z') {
+    return await TableModel.aggregate([
+      {
+        $match: {
+          deletedAt: { $eq: null },
+          $expr: {
+            $and: [
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantID',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $group: {
+          _id: '$restaurantID',
+          restaurant: { $first: '$restaurant' },
+          name: { $first: '$name' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          tableNumber: { $first: '$tableNumber' },
+          peopleAmount: { $first: '$peopleAmount' },
+          price: { $first: '$price' }
+        }
+      },
+      {
+        $sort: { 'restaurant.name': 1 }
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: '$_id',
+          restaurant: 1,
+          name: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          tableNumber: 1,
+          peopleAmount: 1,
+          price: 1
+        }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      }
+    ])
+  } else if (sort === 'Z->A') {
+    return await TableModel.aggregate([
+      {
+        $match: {
+          deletedAt: { $eq: null },
+          $expr: {
+            $and: [
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantID',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $group: {
+          _id: '$restaurantID',
+          restaurant: { $first: '$restaurant' },
+          name: { $first: '$name' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          tableNumber: { $first: '$tableNumber' },
+          peopleAmount: { $first: '$peopleAmount' },
+          price: { $first: '$price' }
+        }
+      },
+      {
+        $sort: { 'restaurant.name': -1 }
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: '$_id',
+          restaurant: 1,
+          name: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          tableNumber: 1,
+          peopleAmount: 1,
+          price: 1
+        }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      }
+    ])
+  } else if (sort === 'price-asc') {
+    return await TableModel.aggregate([
+      {
+        $match: {
+          deletedAt: { $eq: null },
+          $expr: {
+            $and: [
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantID',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $addFields: {
+          pricePerPerson: { $divide: ['$price', '$peopleAmount'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$restaurantID',
+          restaurant: { $first: '$restaurant' },
+          name: { $first: '$name' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          tableNumber: { $first: '$tableNumber' },
+          peopleAmount: { $first: '$peopleAmount' },
+          price: { $first: '$price' },
+          pricePerPerson: { $first: '$pricePerPerson' }
+        }
+      },
+      {
+        $sort: { pricePerPerson: 1 }
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: '$_id',
+          restaurant: 1,
+          name: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          tableNumber: 1,
+          peopleAmount: 1,
+          price: 1
+        }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      }
+    ])
+  } else if (sort === 'price-desc') {
+    return await TableModel.aggregate([
+      {
+        $match: {
+          deletedAt: { $eq: null },
+          $expr: {
+            $and: [
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantID',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $addFields: {
+          pricePerPerson: { $divide: ['$price', '$peopleAmount'] }
+        }
+      },
+      {
+        $group: {
+          _id: '$restaurantID',
+          restaurant: { $first: '$restaurant' },
+          name: { $first: '$name' },
+          status: { $first: '$status' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+          tableNumber: { $first: '$tableNumber' },
+          peopleAmount: { $first: '$peopleAmount' },
+          price: { $first: '$price' },
+          pricePerPerson: { $first: '$pricePerPerson' }
+        }
+      },
+      {
+        $sort: { pricePerPerson: -1 }
+      },
+      {
+        $project: {
+          _id: 0,
+          restaurantId: '$_id',
+          restaurant: 1,
+          name: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          tableNumber: 1,
+          peopleAmount: 1,
+          price: 1
+        }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
       }
     ])
   }

@@ -13,7 +13,7 @@ const getAllTable = async (req, res, next) => {
     } else {
       data = await TableService.getAllTable()
     }
-    return new Response(200, 'Thành Công', data).resposeHandler(res)
+    return new Response(200, 'Thành Công', { content: data, numPage: Math.ceil(data.length / 8) }).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
   }

@@ -137,5 +137,6 @@ export const RestaurantController = {
   deleteRestaurant,
   getFourNearestRestaurant,
   findRestaurantByAnyField,
+  
   countRestaurant
 }
