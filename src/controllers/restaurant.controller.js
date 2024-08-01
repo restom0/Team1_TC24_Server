@@ -8,7 +8,8 @@ import { CommonUtils } from '../utils/common.util.js'
 const getAllRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
-    const data = await RestaurantService.getAllRestaurant()
+    const page = req.query.page
+    const data = await RestaurantService.getAllRestaurant(page)
     return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(500, error.message, null).resposeHandler(res)
@@ -137,6 +138,6 @@ export const RestaurantController = {
   deleteRestaurant,
   getFourNearestRestaurant,
   findRestaurantByAnyField,
-  
+
   countRestaurant
 }

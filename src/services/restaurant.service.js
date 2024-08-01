@@ -8,8 +8,12 @@ import { GOOGLE_CONFIG } from '../configs/google.config.js'
 import { TableModel } from '../models/tables.model.js'
 import MenuItem from '../models/menus.model.js'
 
-const getAllRestaurant = async () => {
-  const restaurants = await RestaurantModel.find({ deletedAt: null })
+const getAllRestaurant = async (page) => {
+  const restaurants = await RestaurantModel.aggregate([
+    { $match: { deletedAt: null } },
+    { $skip: (page - 1) * 5 },
+    { $limit: 5 }
+  ])
   return restaurants.map((restaurant) => new RestaurantDto(restaurant))
 }
 const getRestaurantById = async (id) => {
