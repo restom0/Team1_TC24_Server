@@ -151,6 +151,57 @@ const findTablesByAnyField = async (searchTerm) => {
 
   return await TableModel.find(query).lean()
 }
+const getAllTableByFilterAndSort = async (upper, lower, sort, page) => {
+  if (sort === 'new') {
+    return await TableModel.aggregate([
+      {
+        $match: {
+          deletedAt: { $eq: null },
+          $expr: {
+            $and: [
+              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, lower] },
+              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, upper] }
+            ]
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurantID',
+          foreignField: '_id',
+          as: 'restaurant'
+        }
+      },
+      {
+        $unwind: '$restaurant'
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          _id: 1,
+          restaurantId: 1,
+          restaurant: '$restaurant',
+          name: 1,
+          status: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          tableNumber: 1,
+          peopleAmount: 1,
+          price: 1
+        }
+      }
+    ])
+  }
+}
 
 export const TableService = {
   getAllTable,
@@ -158,5 +209,6 @@ export const TableService = {
   createTable,
   updateTable,
   deleteTable,
-  findTablesByAnyField
+  findTablesByAnyField,
+  getAllTableByFilterAndSort
 }

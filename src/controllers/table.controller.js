@@ -6,7 +6,13 @@ import { CommonUtils } from '../utils/common.util.js'
 const getAllTable = async (req, res, next) => {
   // #swagger.tags=['Table']
   try {
-    const data = await TableService.getAllTable()
+    let data
+    if (req.query.upper && req.query.lower && req.query.sort) {
+      const { upper, lower, sort, page } = req.query
+      data = await TableService.getAllTableByFilterAndSort(upper, lower, sort, page)
+    } else {
+      data = await TableService.getAllTable()
+    }
     return new Response(200, 'Thành Công', data).resposeHandler(res)
   } catch (error) {
     return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
