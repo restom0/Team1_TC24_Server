@@ -60,6 +60,19 @@ const getTableById = async (id) => {
       $unwind: '$restaurant'
     },
     {
+      $group: {
+        _id: '$restaurantID',
+        restaurant: { $first: '$restaurant' },
+        name: { $first: '$name' },
+        status: { $first: '$status' },
+        createdAt: { $first: '$createdAt' },
+        updatedAt: { $first: '$updatedAt' },
+        tableNumber: { $first: '$tableNumber' },
+        peopleAmount: { $first: '$peopleAmount' },
+        price: { $first: '$price' }
+      }
+    },
+    {
       $project: {
         _id: 1,
         peopleAmount: 1,
@@ -197,7 +210,7 @@ const getAllTableByFilterAndSort = async (upper, lower, sort, page) => {
       {
         $project: {
           _id: 0,
-          restaurantId: '$_id', // Renaming _id to restaurantId
+          restaurantId: '$_id',
           restaurant: 1,
           name: 1,
           status: 1,
