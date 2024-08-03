@@ -8,57 +8,253 @@ import { GOOGLE_CONFIG } from '../configs/google.config.js'
 import { TableModel } from '../models/tables.model.js'
 import MenuItem from '../models/menus.model.js'
 
-const getAllRestaurant = async (page) => {
+const getAllRestaurant = async (page, size, field, sort) => {
   const restaurants = await RestaurantModel.aggregate([
-    { $match: { deletedAt: null } },
-    { $skip: (page - 1) * 5 },
-    { $limit: 5 }
-  ])
-  return restaurants.map((restaurant) => new RestaurantDto(restaurant))
-}
-const getRestaurantById = async (id) => {
-  const restaurant = await RestaurantModel.aggregate([
-    { $match: { _id: Types.ObjectId.createFromHexString(id), deletedAt: null } },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'owner_id',
-        foreignField: '_id',
-        as: 'owner'
-      }
-    },
-    { $unwind: '$owner' },
+    { $match: { deleted_at: null } },
+    { $skip: (page - 1) * size },
+    { $limit: size },
+    { $sort: { field: sort } },
     {
       $project: {
-        _id: 1,
-        name: 1,
-        address: 1,
-        openTime: 1,
-        closeTime: 1,
-        description: 1,
-        imageUrls: 1,
-        slider1: 1,
-        slider2: 1,
-        slider3: 1,
-        slider4: 1,
-        owner: {
-          _id: 1,
-          name: 1,
-          email: 1,
-          phone: 1
-        }
+        created_at: 0,
+        updated_at: 0,
+        deleted_at: 0
       }
     }
   ])
-  const tables = await TableModel.find({ restaurantID: Types.ObjectId.createFromHexString(id), deletedAt: null })
-  const menus = await MenuItem.find({ restaurant_id: Types.ObjectId.createFromHexString(id), deletedAt: null })
+  const total = await RestaurantModel.countDocuments({ deleted_at: null })
+  return { data: restaurants, info: { total, page, size, number_of_pages: Math.ceil(total / size) } }
+}
+const getRestaurantById = async (id) => {
+  const restaurant = await RestaurantModel.arggregate([
+    { $match: { _id: Types.ObjectId.createFromHexString(id), deleted_at: null } },
+    { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'user' } },
+    {
+      $project: {
+        created_at: 0,
+        updated_at: 0,
+        deleted_at: 0,
+        user: '$user.name'
+      }
+    }
+  ])
+  const tables = await TableModel.arggregate([
+    { $match: { restaurant_id: Types.ObjectId.createFromHexString(id), deleted_at: null } },
+    {
+      $project: {
+        created_at: 0,
+        updated_at: 0,
+        deleted_at: 0
+      }
+    },
+    {
+      $project: {
+        number_of_tables: 1,
+        people_per_table: 1
+      }
+    }
+  ])
+  const totalPeople = tables.reduce((total, table) => total + table.people_per_table * table.number_of_tables, 0)
+  const menus = await MenuItem.find({ restaurant_id: Types.ObjectId.createFromHexString(id), deleted_at: null })
   return restaurant.length > 0
     ? {
-        restaurant: new RestaurantDto(restaurant[0]),
-        tables,
+        restaurant: restaurant[0],
+        totalPeople,
         menus
       }
     : null
+}
+
+const createRestaurant = async (
+  id,
+  {
+    name,
+    address,
+    openTime,
+    closeTime,
+    description,
+    image_url,
+    slider1,
+    slider2,
+    slider3,
+    slider4,
+    public_id_avatar,
+    public_id_slider1,
+    public_id_slider2,
+    public_id_slider3,
+    public_id_slider4,
+    price_per_table
+  }
+) => {
+  const existingRestaurant = await RestaurantModel.findOne({
+    name,
+    address,
+    deleted_at: null
+  })
+
+  if (existingRestaurant) {
+    throw new NotFoundError('Nhà hàng đã tồn tại')
+  }
+
+  const newRestaurant = new RestaurantModel({
+    _id: new mongoose.Types.ObjectId(),
+    name,
+    address,
+    openTime,
+    closeTime,
+    description,
+    image_url,
+    slider1,
+    slider2,
+    slider3,
+    slider4,
+    public_id_avatar,
+    public_id_slider1,
+    public_id_slider2,
+    public_id_slider3,
+    public_id_slider4,
+    price_per_table,
+    user_id: Types.ObjectId.createFromHexString(id)
+  })
+
+  return await newRestaurant.save()
+}
+
+const updateRestaurant = async (
+  id,
+  {
+    name,
+    address,
+    openTime,
+    closeTime,
+    description,
+    image_url,
+    slider1,
+    slider2,
+    slider3,
+    slider4,
+    public_id_avatar,
+    public_id_slider1,
+    public_id_slider2,
+    public_id_slider3,
+    public_id_slider4,
+    price_per_table
+  }
+) => {
+  const restaurant = await this.getRestaurantById(id)
+
+  if (!restaurant || restaurant.deleted_at) {
+    throw new NotFoundError('Nhà hàng không tìm thấy')
+  }
+
+  const result = await RestaurantModel.updateOne(
+    { _id: Types.ObjectId.createFromHexString(id) },
+    {
+      name,
+      address,
+      openTime,
+      closeTime,
+      description,
+      image_url,
+      slider1,
+      slider2,
+      slider3,
+      slider4,
+      public_id_avatar,
+      public_id_slider1,
+      public_id_slider2,
+      public_id_slider3,
+      public_id_slider4,
+      price_per_table,
+      updated_at: Date.now()
+    }
+  )
+  if (result.modifiedCount === 0) {
+    throw new NotFoundError('Nhà hàng không được cập nhật')
+  }
+  return await RestaurantModel.findById(id)
+}
+
+const deleteRestaurant = async (id) => {
+  const restaurant = await RestaurantModel.findById(id, { deleted_at: null }).orFail(
+    new NotFoundError('Nhà hàng không tìm thấy')
+  )
+  return await RestaurantModel.updateOne(
+    { _id: Types.ObjectId.createFromHexString(id), deleted_at: null },
+    { deleted_at: new Date() }
+  )
+}
+
+const calculateDistance = async (origin, destination) => {
+  try {
+    const response = await axios.get('https://maps.googleapis.com/maps/api/distancematrix/json', {
+      params: {
+        origins: origin,
+        destinations: destination,
+        units: 'metric',
+        key: GOOGLE_CONFIG.GOOGLE_API_KEY
+      }
+    })
+
+    const distance = response.data.rows[0].elements[0].distance.text
+    return distance
+  } catch (error) {
+    console.error('Error calculating distance:', error)
+    throw error
+  }
+}
+const getFourNearestRestaurant = async (latitude, longitude) => {
+  const restaurants = await RestaurantModel.find({ deleted_at: null })
+  const restaurantWithDistance = []
+  for (const restaurant of restaurants) {
+    const distance = await this.calculateDistance(
+      `${latitude},${longitude}`,
+      `${restaurant.latitude},${restaurant.longitude}`
+    )
+    restaurantWithDistance.push({ ...restaurant._doc, distance })
+  }
+  return restaurantWithDistance
+}
+
+const getDistanceFromRestaurant = async (restaurantId, latitude, longitude) => {
+  const restaurant = await RestaurantModel.findById(restaurantId)
+  return await this.calculateDistance(`${latitude},${longitude}`, `${restaurant.latitude},${restaurant.longitude}`)
+}
+const findRestaurantsByAnyField = async (searchTerm, page, size) => {
+  const restaurants = await RestaurantModel.aggregate([
+    {
+      $match: {
+        $or: [
+          { name: { $regex: searchTerm, $options: 'i' } },
+          { address: { $regex: searchTerm, $options: 'i' } },
+          { description: { $regex: searchTerm, $options: 'i' } }
+        ],
+        deleted_at: null
+      }
+    },
+    { $skip: (page - 1) * size },
+    { $limit: size },
+    {
+      $project: {
+        created_at: 0,
+        updated_at: 0,
+        deleted_at: 0
+      }
+    }
+  ])
+  const total = await RestaurantModel.countDocuments({
+    $or: [
+      { name: { $regex: searchTerm, $options: 'i' } },
+      { address: { $regex: searchTerm, $options: 'i' } },
+      { description: { $regex: searchTerm, $options: 'i' } }
+    ],
+    deleted_at: null
+  })
+  return { data: restaurants, info: { total, page, size, number_of_pages: Math.ceil(total / size) } }
+}
+const countRestaurant = async () => {
+  const result = await RestaurantModel.countDocuments()
+  return result
 }
 
 const getLatLngFromAddress = async (address) => {
@@ -88,194 +284,184 @@ const getLatLngFromAddress = async (address) => {
   }
 }
 
-const createRestaurant = async (
-  id,
-  {
-    name,
-    address,
-    openTime,
-    closeTime,
-    description,
-    imageUrls,
-    slider1,
-    slider2,
-    slider3,
-    slider4,
-    public_id_avatar,
-    public_id_slider1,
-    public_id_slider2,
-    public_id_slider3,
-    public_id_slider4
-  }
-) => {
-  // Kiểm tra sự tồn tại của nhà hàng
-  const existingRestaurant = await RestaurantModel.findOne({
-    address,
-    deletedAt: null
-  })
-
-  if (existingRestaurant) {
-    throw new NotFoundError('Nhà hàng đã tồn tại')
-  }
-
-  // Tạo nhà hàng mới
-  const newRestaurant = new RestaurantModel({
-    _id: new mongoose.Types.ObjectId(),
-    name,
-    address,
-    openTime,
-    closeTime,
-    description,
-    imageUrls,
-    slider1,
-    slider2,
-    slider3,
-    slider4,
-    public_id_avatar,
-    public_id_slider1,
-    public_id_slider2,
-    public_id_slider3,
-    public_id_slider4,
-    owner_id: new mongoose.Types.ObjectId(id.toString())
-  })
-
-  // Lưu nhà hàng mới vào cơ sở dữ liệu
-  await newRestaurant.save()
-
-  return new RestaurantDto(newRestaurant)
-}
-
-const updateRestaurant = async (
-  id,
-  {
-    name,
-    address,
-    openTime,
-    closeTime,
-    description,
-    imageUrls,
-    slider1,
-    slider2,
-    slider3,
-    slider4,
-    public_id_avatar,
-    public_id_slider1,
-    public_id_slider2,
-    public_id_slider3,
-    public_id_slider4
-  }
-) => {
-  // Tìm nhà hàng theo ID
-  const restaurant = await getRestaurantById(id)
-
-  if (!restaurant || restaurant.deletedAt) {
-    throw new NotFoundError('Nhà hàng không tìm thấy')
-  }
-
-  // Cập nhật nhà hàng
-  const result = await RestaurantModel.updateOne(
-    { _id: Types.ObjectId.createFromHexString(id) },
-    {
-      name,
-      address,
-      openTime,
-      closeTime,
-      description,
-      imageUrls,
-      slider1,
-      slider2,
-      slider3,
-      slider4,
-      public_id_avatar,
-      public_id_slider1,
-      public_id_slider2,
-      public_id_slider3,
-      public_id_slider4,
-      updatedAt: Date.now()
-    }
-  )
-
-  // Kiểm tra kết quả cập nhật
-  if (result.modifiedCount === 0) {
-    throw new NotFoundError('Nhà hàng không được cập nhật')
-  }
-
-  // Trả về nhà hàng đã cập nhật
-  return await RestaurantModel.findById(id)
-}
-
-const deleteRestaurant = async (id) => {
-  const restaurant = await RestaurantModel.findById(id)
-  if (CommonUtils.checkNullOrUndefined(restaurant)) {
-    throw new NotFoundError('Restaurant not found')
-  }
-  return await RestaurantModel.updateOne(
-    { _id: Types.ObjectId.createFromHexString(id), deletedAt: null },
-    { deletedAt: new Date() }
-  )
-}
-
-const calculateDistance = async (origin, destination) => {
-  try {
-    const response = await axios.get('https://maps.googleapis.com/maps/api/distancematrix/json', {
-      params: {
-        origins: origin,
-        destinations: destination,
-        units: 'metric',
-        key: GOOGLE_CONFIG.GOOGLE_API_KEY
-      }
-    })
-
-    const distance = response.data.rows[0].elements[0].distance.text
-    return distance
-  } catch (error) {
-    console.error('Error calculating distance:', error)
-    throw error
-  }
-}
-const getFourNearestRestaurant = async (latitude, longitude) => {
-  const restaurants = await RestaurantModel.find({ deletedAt: null })
-  const restaurantWithDistance = []
-  for (const restaurant of restaurants) {
-    const distance = await calculateDistance(
-      `${latitude},${longitude}`,
-      `${restaurant.latitude},${restaurant.longitude}`
-    )
-    restaurantWithDistance.push({ ...restaurant._doc, distance })
-  }
-  return restaurantWithDistance
-}
-
-const getDistanceFromRestaurant = async (restaurantId, latitude, longitude) => {
-  const restaurant = await RestaurantModel.findById(restaurantId)
-  return await calculateDistance(`${latitude},${longitude}`, `${restaurant.latitude},${restaurant.longitude}`)
-}
-const findRestaurantsByAnyField = async (searchTerm) => {
-  // Kiểm tra nếu searchTerm là một ObjectId hợp lệ
-  const isObjectId = mongoose.Types.ObjectId.isValid(searchTerm)
-
-  // Tạo truy vấn tìm kiếm
-  const query = {
-    $and: [
+const getAllRestaurantByFilterAndSort = async (upper, lower, sort, page) => {
+  let restaurants, total
+  if (sort === 'new') {
+    restaurants = await RestaurantModel.aggregate([
       {
-        $or: [
-          ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
-          { name: { $regex: searchTerm, $options: 'i' } },
-          { address: { $regex: searchTerm, $options: 'i' } },
-          { openTime: { $regex: searchTerm, $options: 'i' } },
-          { closeTime: { $regex: searchTerm, $options: 'i' } }
-        ]
+        $match: {
+          deleted_at: { $eq: null },
+          price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+        }
       },
-      { deletedAt: null } // Chỉ trả về nhà hàng không bị xóa
-    ]
+      {
+        $sort: { created_at: -1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          created_at: 0,
+          updated_at: 0,
+          deleted_at: 0
+        }
+      }
+    ]).exec()
+    total = await RestaurantModel.countDocuments({
+      deleted_at: { $eq: null },
+      price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+    }).exec()
+  } else if (sort === 'old') {
+    restaurants = await RestaurantModel.aggregate([
+      {
+        $match: {
+          deleted_at: { $eq: null },
+          price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+        }
+      },
+      {
+        $sort: { create_aAt: 1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          created_at: 0,
+          updated_at: 0,
+          deleted_at: 0
+        }
+      }
+    ]).exec()
+    total = await RestaurantModel.countDocuments({
+      deleted_at: { $eq: null },
+      price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+    }).exec()
+  } else if (sort === 'A->Z') {
+    restaurants = await RestaurantModel.aggregate([
+      {
+        $match: {
+          deleted_at: { $eq: null },
+          price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+        }
+      },
+      {
+        $sort: { name: 1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          created_at: 0,
+          updated_at: 0,
+          deleted_at: 0
+        }
+      }
+    ]).exec()
+    total = await RestaurantModel.countDocuments({
+      deleted_at: { $eq: null },
+      price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+    }).exec()
+  } else if (sort === 'Z->A') {
+    restaurants = await RestaurantModel.aggregate([
+      {
+        $match: {
+          deleted_at: { $eq: null },
+          price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+        }
+      },
+      {
+        $sort: { name: -1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          created_at: 0,
+          updated_at: 0,
+          deleted_at: 0
+        }
+      }
+    ]).exec()
+    total = await RestaurantModel.countDocuments({
+      deleted_at: { $eq: null },
+      price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+    }).exec()
+  } else if (sort === 'price-asc') {
+    restaurants = await RestaurantModel.aggregate([
+      {
+        $match: {
+          deleted_at: { $eq: null },
+          price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+        }
+      },
+      {
+        $sort: { price_per_table: 1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          created_at: 0,
+          updated_at: 0,
+          deleted_at: 0
+        }
+      }
+    ]).exec()
+    total = await RestaurantModel.countDocuments({
+      deleted_at: { $eq: null },
+      price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+    }).exec()
+  } else if (sort === 'price-desc') {
+    restaurants = await RestaurantModel.aggregate([
+      {
+        $match: {
+          deleted_at: { $eq: null },
+          price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+        }
+      },
+      {
+        $sort: { price_per_table: -1 }
+      },
+      {
+        $skip: (page - 1) * 8
+      },
+      {
+        $limit: 8
+      },
+      {
+        $project: {
+          created_at: 0,
+          updated_at: 0,
+          deleted_at: 0
+        }
+      }
+    ]).exec()
+    total = await RestaurantModel.countDocuments({
+      deleted_at: { $eq: null },
+      price_per_table: { $gte: Number(lower), $lte: Number(upper) }
+    }).exec()
   }
-
-  return await RestaurantModel.find(query).lean()
-}
-const countRestaurant = async () => {
-  const result = await RestaurantModel.countDocuments()
-
-  return result
+  return { data: restaurants, info: { total, page, size: 8, number_of_pages: Math.ceil(total / 8) } }
 }
 export const RestaurantService = {
   getAllRestaurant,
@@ -283,8 +469,11 @@ export const RestaurantService = {
   createRestaurant,
   updateRestaurant,
   deleteRestaurant,
+  calculateDistance,
   getFourNearestRestaurant,
   getDistanceFromRestaurant,
   findRestaurantsByAnyField,
-  countRestaurant
+  countRestaurant,
+  getLatLngFromAddress,
+  getAllRestaurantByFilterAndSort
 }

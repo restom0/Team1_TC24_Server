@@ -6,16 +6,11 @@ import { CommonUtils } from '../utils/common.util.js'
 const getAllTable = async (req, res, next) => {
   // #swagger.tags=['Table']
   try {
-    let data
-    if (req.query.upper && req.query.lower && req.query.sort) {
-      const { upper, lower, sort, page } = req.query
-      data = await TableService.getAllTableByFilterAndSort(upper, lower, sort, page)
-    } else {
-      data = await TableService.getAllTable()
-    }
-    return new Response(200, 'Thành Công', { content: data, numPage: Math.ceil(data.length / 8) }).resposeHandler(res)
+    const { page, size } = req.query
+    const data = await TableService.getAllTable(page, size)
+    next(new Response(200, 'Thành Công', data.data, data.info)).resposeHandler(res)
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -24,68 +19,49 @@ const getTableById = async (req, res, next) => {
   try {
     const id = req.params.id
     const data = await TableService.getTableById(id)
-    return new Response(200, 'Thành Công', data).resposeHandler(res)
+    next(new Response(200, 'Thành Công', data).resposeHandler(res))
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const createTable = async (req, res, next) => {
   // #swagger.tags=['Table']
   try {
-    const data = req.body
-    if (CommonUtils.checkNullOrUndefined(data)) {
-      throw new BadRequestError('Dữ liệu là bắt buộc')
-    }
-    const result = await TableService.createTable(data)
-    console.log(result)
-    return new Response(201, 'Thành Công', result).resposeHandler(res)
+    const result = await TableService.createTable(req.body)
+    next(new Response(201, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, error).resposeHandler(res))
   }
 }
 
-const updateTable = async (req, res) => {
+const updateTable = async (req, res, next) => {
   // #swagger.tags=['Table']
   try {
-    const id = req.params.id
-    const data = req.body
-    if (CommonUtils.checkNullOrUndefined(data)) {
-      throw new BadRequestError('Dữ liệu là bắt buộc')
-    }
-    const result = await TableService.updateTable(id, data)
-    return new Response(200, 'Thành Công', result).resposeHandler(res)
+    const result = await TableService.updateTable(req.params.id, req.body)
+    next(new Response(200, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
-const deleteTable = async (req, res) => {
+const deleteTable = async (req, res, next) => {
   // #swagger.tags=['Table']
   try {
-    const id = req.params.id
-    const result = await TableService.deleteTable(id)
-    res.json(result)
+    const result = await TableService.deleteTable(req.params.id)
+    next(new Response(200, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    res.status(error.statusCode || 500).json({ error: error.message })
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 const findTableByAnyField = async (req, res, next) => {
   try {
     const { searchTerm } = req.body
-    if (!searchTerm) {
-      throw new BadRequestError('Giá trị tìm kiếm là bắt buộc')
-    }
-    const result = await TableService.findTablesByAnyField(searchTerm)
-    if (result.length === 0) {
-      return new Response(404, 'Không tìm thấy bàn', null).resposeHandler(res)
-    }
-    return new Response(200, 'Đã tìm thấy bàn', result).resposeHandler(res)
+    const { page, size } = req.query
+    const result = await TableService.findTablesByAnyField(searchTerm, page, size)
+    next(new Response(200, 'Đã tìm thấy bàn', result.data, result.info).resposeHandler(res))
   } catch (error) {
-    return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 

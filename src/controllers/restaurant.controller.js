@@ -8,11 +8,17 @@ import { CommonUtils } from '../utils/common.util.js'
 const getAllRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
-    const page = req.query.page
-    const data = await RestaurantService.getAllRestaurant(page)
-    return new Response(200, 'Thành Công', data).resposeHandler(res)
+    let data
+    const { upper, lower, sort, page, size, field } = req.query
+    if (size) {
+      const { upper, lower, sort, page } = req.query
+      data = await RestaurantService.getAllTableByFilterAndSort(upper, lower, sort, page)
+    } else {
+      data = await RestaurantService.getAllRestaurant(page, size, field, sort)
+    }
+    next(new Response(200, 'Thành Công', data.data, data.info).resposeHandler(res))
   } catch (error) {
-    return new Response(500, error.message, null).resposeHandler(res)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -20,12 +26,9 @@ const getRestaurantById = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getRestaurantById(req.params.id)
-    return new Response(200, 'Thành Công', data).resposeHandler(res)
+    next(new Response(200, 'Thành Công', data).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -36,12 +39,9 @@ const createRestaurant = async (req, res, next) => {
       throw new BadRequestError('Dữ liệu là bắt buộc')
     }
     const result = await RestaurantService.createRestaurant(req.user.id, req.body)
-    return new Response(201, 'Thành Công', result).resposeHandler(res)
+    next(new Response(201, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -52,12 +52,9 @@ const updateRestaurant = async (req, res, next) => {
       throw new BadRequestError('Dữ liệu là bắt buộc')
     }
     const result = await RestaurantService.updateRestaurant(req.params.id, req.body)
-    return new Response(200, 'Thành Công', result).resposeHandler(res)
+    next(new Response(200, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -65,12 +62,9 @@ const deleteRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const result = await RestaurantService.deleteRestaurant(req.params.id)
-    return new Response(HttpStatusCode.Accepted, 'Thành Công', result).resposeHandler(res)
+    next(new Response(HttpStatusCode.Accepted, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -78,12 +72,9 @@ const getFourNearestRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getFourNearestRestaurant(req.query)
-    return new Response(200, 'Thành Công', data).resposeHandler(res)
+    next(new Response(200, 'Thành Công', data).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -91,45 +82,36 @@ const getDistanceFromRestaurant = async (req, res, next) => {
   // #swagger.tags=['Restaurant']
   try {
     const data = await RestaurantService.getDistanceFromRestaurant(req.query)
-    return new Response(200, 'Thành Công', data).resposeHandler(res)
+    next(new Response(200, 'Thành Công', data).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const findRestaurantByAnyField = async (req, res, next) => {
+  // #swagger.tags=['Restaurant']
   try {
+    const { page, size } = req.query
     const { searchTerm } = req.body
     if (!searchTerm) {
       throw new BadRequestError('Giá trị tìm kiếm là bắt buộc')
     }
-    const result = await RestaurantService.findRestaurantsByAnyField(searchTerm)
-    if (result.length === 0) {
-      return new Response(404, 'Không tìm thấy nhà hàng', null).resposeHandler(res)
-    }
-    return new Response(200, 'Đã tìm thấy nhà hàng', result).resposeHandler(res)
+    const result = await RestaurantService.findRestaurantsByAnyField(searchTerm, page, size)
+    next(new Response(200, 'Đã tìm thấy nhà hàng', result.data, result.info).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const countRestaurant = async (req, res, next) => {
   try {
     const result = await RestaurantService.countRestaurant()
-    return new Response(200, 'Thành Công', result).resposeHandler(res)
+    next(new Response(200, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
+
 export const RestaurantController = {
   getAllRestaurant,
   getRestaurantById,
@@ -137,7 +119,7 @@ export const RestaurantController = {
   updateRestaurant,
   deleteRestaurant,
   getFourNearestRestaurant,
+  getDistanceFromRestaurant,
   findRestaurantByAnyField,
-
   countRestaurant
 }

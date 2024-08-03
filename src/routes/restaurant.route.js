@@ -42,7 +42,6 @@ RestaurantRouter.delete(
   authenticationAdmin,
   RestaurantController.deleteRestaurant
 )
-RestaurantRouter.post('/find-restaurant', RestaurantController.findRestaurantByAnyField)
-RestaurantRouter.get('/total-restaurant', requireApiKey, authenticationAdmin, RestaurantController.countRestaurant)
+RestaurantRouter.post('/search', RestaurantController.findRestaurantByAnyField)
 
-export { RestaurantRouter }
+export default RestaurantRouter

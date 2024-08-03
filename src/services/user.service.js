@@ -9,33 +9,40 @@ import { NotFoundError } from '../errors/notFound.error.js'
 import { createHash, checkPassword } from '../middlewares/usePassword.js'
 import { MailService } from './mail.service.js'
 
-const login = async ({ username, password }) => {
-  const user = await UserModel.findOne({ username }).exec()
-  if (!user) {
-    throw new BadRequestError('Username or password is incorrect')
-  }
-  const isPasswordValid = await checkPassword(password, user.password)
+const login = async ({ username, email, phone, password }) => {
+  const user = username
+    ? await UserModel.findOne({ username }).exec()
+    : email
+      ? await UserModel.findOne({ email }).exec()
+      : await UserModel.findOne({ phone })
+          .exec()
+          .orFail(() => {
+            throw new BadRequestError('Username or password is incorrect')
+          })
+  const isPasswordValid = await checkPassword(password, user.salt, user.password)
   if (!isPasswordValid) {
     throw new BadRequestError('Username or password is incorrect')
   }
-  if (user.salt === undefined || user.salt === null || user.salt === '') {
+  if (user.salt === undefined) {
     throw new BadRequestError('Tài khoản đã bị khóa')
   }
   return createApiKey(user._id, user.role)
 }
-const adminLogin = async ({ username, password }) => {
-  const user = await UserModel.findOne({ username }).exec()
-
-  if (!user) {
-    throw new BadRequestError('Invalid username or password')
-  }
-
-  const isPasswordValid = await checkPassword(password, user.password)
+const adminLogin = async ({ username, email, phone, password }) => {
+  const user = username
+    ? await UserModel.findOne({ username }).exec()
+    : email
+      ? await UserModel.findOne({ email }).exec()
+      : await UserModel.findOne({ phone })
+          .exec()
+          .orFail(() => {
+            throw new BadRequestError('Username or password is incorrect')
+          })
+  const isPasswordValid = await checkPassword(password, user.salt, user.password)
   if (!isPasswordValid) {
     throw new BadRequestError('Invalid username or password')
   }
 
-  // Kiểm tra vai trò của người dùng và trả về thông tin tương ứng
   if (user.role === USER_ROLE.ADMIN) {
     return {
       redirect_url: '/dashboard',
@@ -50,20 +57,20 @@ const adminLogin = async ({ username, password }) => {
     throw new BadRequestError('Invalid role')
   }
 }
-
 const register = async ({ username, password, phone, email, name }) => {
   if (await UserModel.findOne({ username })) {
     throw new BadRequestError('Account existed')
   }
+  const salt = createApiKey(Math.random().toString(36).substring(2))
   const user = new UserModel({
     _id: new Types.ObjectId(),
     username,
-    password: await createHash(password),
+    password: await createHash(password + salt),
     phone,
     email,
     name,
     role: USER_ROLE.USER,
-    salt: createApiKey(Math.random().toString(36).substring(2))
+    salt
   })
   return await user.save()
 }
@@ -102,18 +109,33 @@ const checkKey = async ({ id, email }) => {
 const countUser = async () => {
   return await UserModel.countDocuments({ deleted_at: null })
 }
-
 const getUserById = async (id) => {
-  return await UserModel.findById(id)
+  return UserModel.findById(id, { _id: 1, name: 1, phone: 1, email: 1 }).orFail(() => {
+    throw new NotFoundError('User not found')
+  })
 }
 
-const getAllUsers = async () => {
-  return await UserModel.find({ role: USER_ROLE.STAFF }).exec()
+const getAllUsers = async (page, size) => {
+  const users = UserModel.aggregate([
+    { $match: { deleted_at: null } },
+    { $skip: (page - 1) * size },
+    { $limit: size },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        name: 1,
+        phone: 1,
+        email: 1
+      }
+    }
+  ])
+  const total = UserModel.countDocuments({ deleted_at: null })
+  return { data: users, info: { total, page, size, number_of_pages: Math.ceil(total / size) } }
 }
 
 const deleteUser = async (id) => {
-  id = Types.ObjectId.createFromHexString(id)
-  return await UserModel.findByIdAndDelete(id)
+  return await UserModel.findByIdAndUpdate(Types.ObjectId.createFromHexString(id), { deleted_at: Date.now() })
 }
 
 const resetPassword = async (code, newPassword) => {
@@ -121,31 +143,65 @@ const resetPassword = async (code, newPassword) => {
     if (err || !decoded) {
       throw new BadRequestError('Invalid access')
     } else {
-      const result = await checkKey(decoded.data)
+      const result = await this.checkKey(decoded.data)
       if (result.length === 0) {
         throw new NotFoundError('User not found')
       }
 
-      const hashedPassword = createHash(newPassword)
+      const hashedPassword = createHash(newPassword + result[0].salt)
 
-      await UserModel.updateOne({ _id: result[0]._id }, { password: hashedPassword, updated_at: Date.now() })
+      return await UserModel.findByIdAndUpdate(result[0]._id, { password: hashedPassword, updated_at: Date.now() })
     }
   })
-  return true
 }
 
-const findUsersByAnyField = async (searchTerm) => {
-  const isObjectId = mongoose.Types.ObjectId.isValid(searchTerm)
-  const query = {
-    $or: [
-      ...(isObjectId ? [{ _id: new mongoose.Types.ObjectId(searchTerm) }] : []),
-      { username: { $regex: searchTerm, $options: 'i' } },
-      { email: { $regex: searchTerm, $options: 'i' } },
-      { phone: { $regex: searchTerm, $options: 'i' } },
-      { name: { $regex: searchTerm, $options: 'i' } }
-    ]
-  }
-  return await UserModel.find(query).lean()
+const findUsersByAnyField = async (searchTerm, page, size) => {
+  const users = UserModel.aggregate([
+    {
+      $match: {
+        $and: [
+          { deleted_at: null },
+          {
+            $or: [
+              { _id: Types.ObjectId.createFromHexString(searchTerm) },
+              { username: { $regex: searchTerm, $options: 'i' } },
+              { email: { $regex: searchTerm, $options: 'i' } },
+              { phone: { $regex: searchTerm, $options: 'i' } },
+              { name: { $regex: searchTerm, $options: 'i' } }
+            ]
+          }
+        ]
+      }
+    },
+    { $skip: (page - 1) * size },
+    { $limit: size },
+    {
+      $project: {
+        _id: 1,
+        username: 1,
+        email: 1,
+        phone: 1,
+        name: 1
+      }
+    }
+  ])
+  const total = UserModel.countDocuments({
+    $match: {
+      $and: [
+        { deleted_at: null },
+        {
+          $or: [
+            { _id: Types.ObjectId.createFromHexString(searchTerm) },
+            { username: { $regex: searchTerm, $options: 'i' } },
+            { email: { $regex: searchTerm, $options: 'i' } },
+            { phone: { $regex: searchTerm, $options: 'i' } },
+            { name: { $regex: searchTerm, $options: 'i' } }
+          ]
+        }
+      ]
+    }
+  })
+  return { data: users, info: { total, page, size, number_of_pages: Math.ceil(total / size) } }
 }
 
 export const UserService = {

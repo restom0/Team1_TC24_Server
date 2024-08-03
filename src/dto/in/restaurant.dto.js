@@ -1,4 +1,4 @@
-import { body, param } from 'express-validator'
+import { body, param, query } from 'express-validator'
 
 const RestaurangGetAllValidation = []
 
@@ -41,10 +41,20 @@ const RestaurantUpdateValidation = [
 const RestaurantDeleteValidation = [
   param('id').trim().notEmpty().withMessage('Thiếu id').isString().withMessage('Id phải là chuỗi')
 ]
+const RestaurantGetAnyFieldValidation = [
+  query('page').notEmpty().withMessage('Trang không được trống').isNumeric().withMessage('Trang phải là số').toInt(),
+  body('searchTerm')
+    .trim()
+    .notEmpty()
+    .withMessage('Giá trị tìm kiếm là bắt buộc')
+    .isString()
+    .withMessage('Giá trị tìm kiếm phải là một chuỗi')
+]
 export {
   RestaurantCreateValidation,
   RestaurantUpdateValidation,
   RestaurantDeleteValidation,
   RestaurantGetByIdValidation,
-  RestaurangGetAllValidation
+  RestaurangGetAllValidation,
+  RestaurantGetAnyFieldValidation
 }

@@ -5,6 +5,7 @@ import jwt from 'jsonwebtoken'
 import { NotFoundError } from '../errors/notFound.error.js'
 import { ForbiddenRequestError } from '../errors/forbiddenRequest.error.js'
 import { UnAuthorizedError } from '../errors/unauthorizedRequest.error.js'
+import { Response } from '../dto/response/response.js'
 
 export const createApiKey = (data) => {
   const token = jwt.sign(
@@ -19,17 +20,17 @@ export const createApiKey = (data) => {
 export const requireApiKey = async (req, res, next) => {
   try {
     if (CommonUtils.checkNullOrUndefined(req.headers.authorization)) {
-      throw new UnAuthorizedError('You need to login')
+      throw new UnAuthorizedError('Bạn cần đăng nhập')
     }
     const apiKey = req.headers.authorization.split(' ')[1]
 
     jwt.verify(apiKey, 'secret', async (err, decoded) => {
       if (err || !decoded) {
-        throw new UnAuthorizedError('Invalid access')
+        throw new UnAuthorizedError('Bạn cần đăng nhập')
       } else {
         const result = await UserService.authorize(decoded.data)
         if (CommonUtils.checkNullOrUndefined(result)) {
-          throw new NotFoundError('User not found')
+          throw new NotFoundError('Người dùng không tồn tại')
         }
         req.user = {
           id: Types.ObjectId.createFromHexString(decoded.data),
@@ -39,7 +40,7 @@ export const requireApiKey = async (req, res, next) => {
       }
     })
   } catch (error) {
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
@@ -50,14 +51,14 @@ export const authenticationAdmin = async (req, res, next) => {
       CommonUtils.checkNullOrUndefined(req.user.role) ||
       CommonUtils.checkNullOrUndefined(req.user.id)
     ) {
-      throw new UnAuthorizedError('Invalid access')
+      throw new UnAuthorizedError('Bạn cần đăng nhập')
     }
     if (req.user.role !== 'RESTAURANT_OWNER') {
-      throw new UnAuthorizedError('Invalid access')
+      throw new ForbiddenRequestError('Bạn không có quyền truy cập')
     }
     next()
   } catch (error) {
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 export const authenticationStaff = async (req, res, next) => {
@@ -74,6 +75,6 @@ export const authenticationStaff = async (req, res, next) => {
     }
     next()
   } catch (error) {
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }

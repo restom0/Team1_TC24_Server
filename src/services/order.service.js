@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import axios from 'axios'
 import { TableModel } from '../models/tables.model.js'
 import { CommonUtils } from '../utils/common.util.js'
@@ -9,27 +10,14 @@ import { payOS } from '../configs/payos.config.js'
 import { PAYMENT_METHOD } from '../constants/payment_method.constant.js'
 import { PAYMENT_STATUS } from '../constants/payment_status.constant.js'
 import { RestaurantModel } from '../models/restaurants.model.js'
-
-import { check } from 'express-validator'
 import { MailService } from './mail.service.js'
 
-const getAllOrder = async () => {
+const getAllOrder = async (page, size) => {
   const orders = await OrderModel.aggregate([
     {
       $lookup: {
-        from: 'tables',
-        localField: 'tableId',
-        foreignField: '_id',
-        as: 'table'
-      }
-    },
-    {
-      $unwind: '$table'
-    },
-    {
-      $lookup: {
         from: 'users',
-        localField: 'userId',
+        localField: 'user_id',
         foreignField: '_id',
         as: 'user'
       }
@@ -40,7 +28,7 @@ const getAllOrder = async () => {
     {
       $lookup: {
         from: 'restaurants',
-        localField: 'restaurantId',
+        localField: 'restaurant_id',
         foreignField: '_id',
         as: 'restaurant'
       }
@@ -49,21 +37,27 @@ const getAllOrder = async () => {
       $unwind: '$restaurant'
     },
     {
+      $skip: (page - 1) * size
+    },
+    {
+      $limit: size
+    },
+    {
       $project: {
         _id: 1,
-        table: '$table',
         user: '$user',
         restaurant: '$restaurant',
-        totalPeople: 1,
+        total_people: 1,
         name: 1,
         phone_number: 1,
         payment: 1,
-        menuList: 1,
+        menu_list: 1,
         status: 1,
         checkin: 1,
         orderCode: 1,
+        total: 1,
         checkout: 1,
-        totalOrder: 1
+        email: 1
       }
     }
   ])
@@ -71,7 +65,15 @@ const getAllOrder = async () => {
   for (const order of orders) {
     list.push(order)
   }
-  return list
+  return {
+    data: list,
+    info: {
+      total: await OrderModel.countDocuments(),
+      page,
+      size,
+      number_of_pages: Math.ceil((await OrderModel.countDocuments()) / size)
+    }
+  }
 }
 
 const getOrderById = async (id) => {
@@ -79,24 +81,13 @@ const getOrderById = async (id) => {
     {
       $match: {
         _id: Types.ObjectId.createFromHexString(id),
-        deletedAt: null
+        deleted_at: null
       }
-    },
-    {
-      $lookup: {
-        from: 'tables',
-        localField: 'tableId',
-        foreignField: '_id',
-        as: 'table'
-      }
-    },
-    {
-      $unwind: '$table'
     },
     {
       $lookup: {
         from: 'users',
-        localField: 'userId',
+        localField: 'user_id',
         foreignField: '_id',
         as: 'user'
       }
@@ -107,7 +98,7 @@ const getOrderById = async (id) => {
     {
       $lookup: {
         from: 'restaurants',
-        localField: 'restaurantId',
+        localField: 'restaurant_id',
         foreignField: '_id',
         as: 'restaurant'
       }
@@ -118,18 +109,19 @@ const getOrderById = async (id) => {
     {
       $project: {
         _id: 1,
-        table: '$table',
         user: '$user',
         restaurant: '$restaurant',
-        totalPeople: 1,
+        total_people: 1,
         name: 1,
         phone_number: 1,
         payment: 1,
-        menuList: 1,
+        menu_list: 1,
         status: 1,
         checkin: 1,
         orderCode: 1,
-        checkout: 1
+        total: 1,
+        checkout: 1,
+        email: 1
       }
     }
   ])
@@ -141,22 +133,22 @@ const getOrderById = async (id) => {
 }
 const createOrder = async (
   id,
-  { tableId, totalPeople, name, phoneNumber, payment, menu, checkin, restaurantId, total }
+  { total_people, email, name, phone_number, payment, menu_list, checkin, restaurant_id, total }
 ) => {
   const order = await OrderModel.create({
     _id: new mongoose.Types.ObjectId(),
-    userId: id,
-    tableId,
-    totalPeople,
+    user_id: id,
+    total_people,
     name,
-    phone_number: phoneNumber,
+    phone_number,
     payment,
-    menuList: menu,
+    menu_list,
     status: 'PENDING',
     checkin,
     orderCode: Number(String(new Date().getTime()).slice(-6)),
-    restaurantId,
-    totalOrder: total
+    restaurant_id,
+    total: Number(total).toFixed(0),
+    email
   })
   if (payment === 'CREDIT_CARD') {
     const paymentLinkRes = await payOrder({ orderCode: order.orderCode, total })
@@ -166,22 +158,22 @@ const createOrder = async (
 }
 const createDirectOrder = async (
   id,
-  { tableId, totalPeople, name, phoneNumber, payment, menu, checkin, restaurantId, total }
+  { total_people, email, name, phone_number, payment, menu_list, checkin, restaurant_id, total }
 ) => {
   const order = await OrderModel.create({
     _id: new mongoose.Types.ObjectId(),
-    userId: id,
-    tableId,
-    totalPeople,
+    user_id: id,
+    total_people,
     name,
-    phone_number: phoneNumber,
+    phone_number,
     payment,
-    menuList: menu,
+    menu_list,
     status: 'PENDING',
     checkin,
     orderCode: Number(String(new Date().getTime()).slice(-6)),
-    restaurantId,
-    totalOrder: Number(total).toFixed(0)
+    restaurant_id,
+    total: Number(total).toFixed(0),
+    email
   })
   if (payment === 'CREDIT_CARD') {
     const paymentLinkRes = await payDirectOrder({ orderCode: order.orderCode, total })
@@ -189,15 +181,12 @@ const createDirectOrder = async (
   }
   return order
 }
-const updateOrder = async (id, { menu, total }) => {
-  const order = await OrderModel.findById(id)
-  if (!order) {
-    throw new NotFoundError('Order not found')
-  }
+const updateOrder = async (id, { menu_list, total }) => {
+  const order = await OrderModel.findById(id).orFail(new NotFoundError('Order not found'))
   return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), {
-    menuList: menu,
-    totalOrder: total,
-    updatedAt: Date.now()
+    menu_list,
+    total,
+    updated_at: Date.now()
   })
 }
 
@@ -217,7 +206,6 @@ const confirmOrder = async (id) => {
     return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'CANCELLED' })
   }
   if (status.data.data.status === 'PAID') {
-    console.log(Number(id))
     const result = await OrderModel.aggregate([
       {
         $match: { orderCode: Number(id) }
@@ -225,7 +213,7 @@ const confirmOrder = async (id) => {
       {
         $lookup: {
           from: 'restaurants',
-          localField: 'restaurantId',
+          localField: 'restaurant_id',
           foreignField: '_id',
           as: 'restaurant'
         }
@@ -236,7 +224,7 @@ const confirmOrder = async (id) => {
       {
         $lookup: {
           from: 'users',
-          localField: 'userId',
+          localField: 'user_id',
           foreignField: '_id',
           as: 'user'
         }
@@ -258,18 +246,19 @@ const confirmOrder = async (id) => {
       {
         $project: {
           _id: 1,
-          table: '$table',
           user: '$user',
           restaurant: '$restaurant',
-          totalPeople: 1,
+          total_people: 1,
           name: 1,
           phone_number: 1,
-          email: 1,
           payment: 1,
-          menuList: 1,
+          menu_list: 1,
+          status: 1,
           checkin: 1,
           orderCode: 1,
-          totalOrder: 1
+          total: 1,
+          checkout: 1,
+          email: 1
         }
       }
     ])
@@ -280,10 +269,10 @@ const confirmOrder = async (id) => {
                   <p>Ngày nhận bàn: ${Date(result[0].checkin).slice(0, 11)}</p>
                   <p>Thời gian nhận bàn: ${Date(result[0].checkin).slice(11, 16)}</p>
                   <p>Địa chỉ nhà hàng: ${result[0].restaurant.address}</p>
-                  <p>Địa chỉ email: ${result[0].user.email}</p>
+                  <p>Địa chỉ email: ${result[0].email}</p>
                   <p>Số điện thoại: ${result[0].phone_number}</p>
-                  <p>Người đặt: ${result[0].name}</p>
-                  <p>Số người: ${result[0].totalPeople}</p>
+                  <p>Người nhận bàn: ${result[0].name}</p>
+                  <p>Số người: ${result[0].total_people}</p>
                   <p>Phương thức thanh toán: ${result[0].payment}</p>
                   <p>Menu: 
                   ` +
@@ -292,15 +281,14 @@ const confirmOrder = async (id) => {
         .join('') +
       `
                   </p>
-                  <p>Tổng tiền: ${Number(result[0].totalOrder).toFixed(0).toLocaleString('vi-VN')} đ</p>
+                  <p>Tổng tiền: ${Number(result[0].total).toFixed(0).toLocaleString('vi-VN')} đ</p>
                   `
-    MailService.sendMail({ to: result[0].user.email, subject, html })
+    MailService.sendMail({ to: result[0].email, subject, html })
     return await OrderModel.findOneAndUpdate({ orderCode: order.orderCode }, { status: 'SUCCESS' })
   }
 }
 const confirmDirectOrder = async (id) => {
-  const order = await OrderModel.findById(id)
-  if (!order) throw new NotFoundError('Order not found')
+  const order = await OrderModel.findById(id).orFail(new NotFoundError('Order not found'))
   order.status = PAYMENT_STATUS.ONHOLD
   return await OrderModel.findByIdAndUpdate(id, {
     status: 'SUCCESS'
@@ -349,11 +337,7 @@ const updateCheckin = async (id) => {
       { _id: id, status: PAYMENT_STATUS.SUCCESS },
       { _id: id, status: PAYMENT_STATUS.PENDING, payment: PAYMENT_METHOD.CASH }
     ]
-  })
-  console.log(id)
-  if (order.length === 0) {
-    throw new NotFoundError('Order not found')
-  }
+  }).orFail(new NotFoundError('Order not found'))
   return await OrderModel.findByIdAndUpdate(id, {
     status: PAYMENT_STATUS.ONHOLD
   })
@@ -370,11 +354,8 @@ const payOrder = async ({ orderCode, total }) => {
   return await payOS.createPaymentLink(body)
 }
 const deleteOrder = async (id) => {
-  const order = await OrderModel.findById(id)
-  if (!order) {
-    throw new NotFoundError('Order not found')
-  }
-  return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), { deletedAt: Date.now() })
+  const order = await OrderModel.findById(id).orFail(new NotFoundError('Order not found'))
+  return await OrderModel.findByIdAndUpdate(mongoose.Types.ObjectId(id), { deleted_at: Date.now() })
 }
 const findSuccessfulOrders = async () => {
   return await OrderModel.aggregate([
@@ -395,7 +376,7 @@ const findSuccessfulOrders = async () => {
     {
       $lookup: {
         from: 'users',
-        localField: 'userId',
+        localField: 'user_id',
         foreignField: '_id',
         as: 'user'
       }
@@ -406,7 +387,7 @@ const findSuccessfulOrders = async () => {
     {
       $lookup: {
         from: 'restaurants',
-        localField: 'restaurantId',
+        localField: 'restaurant_id',
         foreignField: '_id',
         as: 'restaurant'
       }
@@ -428,7 +409,7 @@ const findSuccessfulOrders = async () => {
         status: 1,
         checkin: 1,
         orderCode: 1,
-        totalOrder: 1
+        total: 1
       }
     }
   ])
@@ -444,20 +425,12 @@ const findPendingCashOrders = async () => {
       $match: query
     },
     {
-      $lookup: {
-        from: 'tables',
-        localField: 'tableId',
-        foreignField: '_id',
-        as: 'table'
-      }
-    },
-    {
       $unwind: '$table'
     },
     {
       $lookup: {
         from: 'users',
-        localField: 'userId',
+        localField: 'user_id',
         foreignField: '_id',
         as: 'user'
       }
@@ -468,7 +441,7 @@ const findPendingCashOrders = async () => {
     {
       $lookup: {
         from: 'restaurants',
-        localField: 'restaurantId',
+        localField: 'restaurant_id',
         foreignField: '_id',
         as: 'restaurant'
       }
@@ -490,7 +463,7 @@ const findPendingCashOrders = async () => {
         status: 1,
         checkin: 1,
         orderCode: 1,
-        totalOrder: 1
+        total: 1
       }
     }
   ])
@@ -504,7 +477,7 @@ const totalRevenueOrder = async () => {
     {
       $group: {
         _id: null,
-        totalPrice: { $sum: '$totalOrder' }
+        totalPrice: { $sum: '$total' }
       }
     }
   ])
@@ -515,46 +488,20 @@ const totalRevenueOrder = async () => {
   }
 }
 const countCompletedOrders = async () => {
-  const result = await OrderModel.aggregate([
-    {
-      $match: { status: 'COMPLETED' }
-    },
-    {
-      $count: 'completedOrders'
-    }
-  ])
-
-  if (result.length > 0) {
-    return result[0].completedOrders
-  } else {
-    return 0
-  }
+  return await OrderModel.countDocuments({ status: 'COMPLETED' })
 }
 const countOrder = async () => {
-  return await OrderModel.countDocuments({ deletedAt: null })
+  return await OrderModel.countDocuments({ deleted_at: null })
 }
-const countOrdersByStatus = async (req, res) => {
-  const result = await OrderModel.aggregate([
-    {
-      $match: { status: { $in: ['PENDING', 'ONHOLD', 'SUCCESS'] } }
-    },
-    {
-      $count: 'orderCount'
-    }
-  ])
-
-  if (result.length > 0) {
-    return result[0].orderCount
-  } else {
-    return 0
-  }
+const countOrdersByStatus = async () => {
+  return await OrderModel.countDocuments({ status: 'ONHOLD' })
 }
 
 const getMostFrequentRestaurantName = async () => {
   const result = await OrderModel.aggregate([
     {
       $group: {
-        _id: '$restaurantId',
+        _id: '$restaurant_id',
         count: { $sum: 1 }
       }
     },

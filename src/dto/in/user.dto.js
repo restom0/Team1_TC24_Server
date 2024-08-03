@@ -1,12 +1,12 @@
 import { body } from 'express-validator'
 
 const UserLoginValidation = [
-  (body('username') || body('phone'))
+  (body('username') || body('phone') || body('email'))
     .trim()
     .notEmpty()
-    .withMessage('Tên đăng nhập là bắt buộc')
+    .withMessage('Tài khoản đăng nhập là bắt buộc')
     .isString()
-    .withMessage('Tên đăng nhập phải là một chuỗi'),
+    .withMessage('Tài khoản đăng nhập phải là một chuỗi'),
   body('password')
     .trim()
     .notEmpty()
@@ -68,4 +68,13 @@ const UserChangePasswordValidation = [
     )
 ]
 
-export { UserLoginValidation, UserRegisterValidation, UserChangePasswordValidation }
+const UserGetAnyFieldValidation = [
+  body('searchTerm')
+    .trim()
+    .notEmpty()
+    .withMessage('Giá trị tìm kiếm là bắt buộc')
+    .isString()
+    .withMessage('Giá trị tìm kiếm phải là một chuỗi')
+]
+
+export { UserLoginValidation, UserRegisterValidation, UserChangePasswordValidation, UserGetAnyFieldValidation }

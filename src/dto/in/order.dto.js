@@ -1,7 +1,15 @@
-import { body, param } from 'express-validator'
+import { body, param, query } from 'express-validator'
 import { PAYMENT_STATUS } from '../../constants/payment_status.constant.js'
 import { PAYMENT_METHOD } from '../../constants/payment_method.constant.js'
-const OrderGetAllValidation = []
+const OrderGetAllValidation = [
+  query('page').notEmpty().withMessage('Trang không được trống').isNumeric().withMessage('Trang phải là số').toInt(),
+  query('size')
+    .notEmpty()
+    .withMessage('Trang không được trống')
+    .isNumeric()
+    .withMessage('Kích thước trang phải là số')
+    .toInt()
+]
 const OrderGetByIdValidation = [
   param('id').trim().notEmpty().withMessage('Thiếu id').isString().withMessage('Id phải là chuỗi')
 ]

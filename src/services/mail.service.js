@@ -30,10 +30,7 @@ const sendMail = ({ to, subject, html }) => {
 }
 
 const sendResetPasswordMail = async (to) => {
-  const user = await UserModel.find({ email: to })
-  if (user.length === 0) {
-    throw new NotFoundError('User not found')
-  }
+  const user = await UserModel.find({ email: to }).orFail(new NotFoundError('User not found'))
   const code = createApiKey({ id: user[0]._id, email: user[0].email })
   const subject = 'Mail reset mật khẩu của bạn'
   const html = `<h1>Mã reset mật khẩu của bạn</h1><p>Mã của bạn là: <strong>${code}</strong></p>`

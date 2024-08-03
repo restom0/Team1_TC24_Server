@@ -9,20 +9,13 @@ import { body, validationResult } from 'express-validator'
 // import { createServer } from 'node:http'
 // import { Server } from 'socket.io'
 import mongoose from 'mongoose'
-import { LogRouter } from './src/routes/log.route.js'
-import { RestaurantRouter } from './src/routes/restaurant.route.js'
-import { TableRouter } from './src/routes/table.route.js'
-import { OrderRouter } from './src/routes/order.route.js'
-import { UserRouter } from './src/routes/user.route.js'
+
 import { logRequestTime } from './src/middlewares/logRequestTime.middleware.js'
 import { logRequestMethod } from './src/middlewares/logRequestMethod.middleware.js'
 import { DATABASE_CONFIG } from './src/configs/database.config.js'
-import { requireApiKey } from './src/middlewares/useApiKey.middleware.js'
 import swaggerUi from 'swagger-ui-express'
 import swaggerDocument from './swagger-output.json' assert { type: 'json' }
-import MenuRouter from './src/routes/menu.route.js'
 import route from './src/routes/index.route.js'
-import { payOS } from './src/configs/payos.config.js'
 const app = express()
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())

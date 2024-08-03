@@ -5,17 +5,17 @@ import { TableModel } from '../models/tables.model.js'
 import mongoose, { Types } from 'mongoose'
 import { RestaurantModel } from '../models/restaurants.model.js'
 import { BadRequestError } from '../errors/badRequest.error.js'
-const getAllTable = async () => {
-  return await TableModel.aggregate([
+const getAllTable = async (page, size) => {
+  const tables = await TableModel.aggregate([
     {
       $match: {
-        deletedAt: { $eq: null }
+        deleted_at: { $eq: null }
       }
     },
     {
       $lookup: {
         from: 'restaurants',
-        localField: 'restaurantID',
+        localField: 'restaurant_id',
         foreignField: '_id',
         as: 'restaurant'
       }
@@ -24,20 +24,22 @@ const getAllTable = async () => {
       $unwind: '$restaurant'
     },
     {
+      $skip: (page - 1) * size
+    },
+    {
+      $limit: size
+    },
+    {
       $project: {
         _id: 1,
-        restaurantId: 1,
         restaurant: '$restaurant',
-        name: 1,
-        status: 1,
-        createdAt: 1,
-        updatedAt: 1,
-        tableNumber: 1,
-        peopleAmount: 1,
-        price: 1
+        number_of_tables: 1,
+        people_per_table: 1
       }
     }
-  ])
+  ]).exec()
+  const count = await TableModel.countDocuments({ deleted_at: { $eq: null } }).exec()
+  return { data: tables, info: { total: count, page, size, number_of_pages: Math.ceil(count / size) } }
 }
 
 const getTableById = async (id) => {
@@ -45,13 +47,13 @@ const getTableById = async (id) => {
     {
       $match: {
         _id: Types.ObjectId.createFromHexString(id),
-        deletedAt: null
+        deleted_at: null
       }
     },
     {
       $lookup: {
         from: 'restaurants',
-        localField: 'restaurantID',
+        localField: 'restaurant_id',
         foreignField: '_id',
         as: 'restaurant'
       }
@@ -61,491 +63,75 @@ const getTableById = async (id) => {
     },
     {
       $group: {
-        _id: '$restaurantID',
+        _id: '$restaurant_id',
         restaurant: { $first: '$restaurant' },
-        name: { $first: '$name' },
-        status: { $first: '$status' },
-        createdAt: { $first: '$createdAt' },
-        updatedAt: { $first: '$updatedAt' },
-        tableNumber: { $first: '$tableNumber' },
-        peopleAmount: { $first: '$peopleAmount' },
-        price: { $first: '$price' }
+        number_of_tables: { $first: '$number_of_tables' },
+        people_per_table: { $first: '$people_per_table' }
       }
     },
     {
       $project: {
         _id: 1,
-        peopleAmount: 1,
-        tableNumber: 1,
-        price: 1,
-        restaurantID: 1,
-        restaurant: '$restaurant'
+        restaurant: '$restaurant',
+        number_of_tables: 1,
+        people_per_table: 1
       }
     }
-  ])
+  ]).exec()
 }
-// _id: ObjectId,
-//   tableNumber: { type: Number, required: true },
-//   status: { type: Boolean, required: true },
-//   restaurantID: { type: ObjectId, ref: 'Restaurants', required: true },
-//   createdAt: { type: Date, required: true, default: Date.now },
-//   updatedAt: { type: Date, required: true, default: Date.now },
-//   deletedAt: { type: Date, default: null }
-const createTable = async ({ tableNumber, peopleAmount, price, restaurantID }) => {
+const createTable = async ({ number_of_tables, people_per_table, restaurant_id }) => {
   const restaurant = await RestaurantModel.find({
-    _id: Types.ObjectId.createFromHexString(restaurantID),
-    deletedAt: null
-  })
-  if (restaurant.length === 0) {
-    throw new NotFoundError('Nhà hàng không tìm thấy')
-  }
-  const check = await TableModel.find({
-    peopleAmount,
-    restaurantID: Types.ObjectId.createFromHexString(restaurantID)
-  })
-  if (check.length > 0) {
-    throw new BadRequestError('Đã tồn tại')
-  }
+    _id: Types.ObjectId.createFromHexString(restaurant_id),
+    deleted_at: null
+  }).orFail(new NotFoundError('Nhà hàng không tìm thấy'))
   const newTable = new TableModel({
     _id: new mongoose.Types.ObjectId(),
-    tableNumber,
-    peopleAmount,
-    price,
-    restaurantID: Types.ObjectId.createFromHexString(restaurantID),
-    createdAt: new Date(),
-    updatedAt: new Date()
+    number_of_tables,
+    people_per_table,
+    restaurant_id: Types.ObjectId.createFromHexString(restaurant_id)
   })
   return await newTable.save()
 }
 
-// const updateTable = async (id, { tableNumber }) => {
-//   return (
-//     await TableModel.findByIdAndUpdate(Types.ObjectId.createFromHexString(id)),
-//     {
-//       tableNumber,
-//       updatedAt: Date.now()
-//     }
-//   )
-// }
-const updateTable = async (id, { tableNumber, peopleAmount, price }) => {
+const updateTable = async (id, { number_of_tables, people_per_table }) => {
   return await TableModel.findByIdAndUpdate(
     Types.ObjectId.createFromHexString(id),
     {
       $set: {
-        tableNumber,
-        peopleAmount,
-        price,
-        updatedAt: new Date()
+        number_of_tables,
+        people_per_table,
+        updated_at: new Date()
       }
     },
     { new: true }
   )
 }
 const deleteTable = async (id) => {
-  const table = await TableModel.find({ _id: id, deletedAt: { $eq: null } })
+  const table = await TableModel.find({ _id: id, deleted_at: { $eq: null } })
 
   if (table.length === 0) {
     throw new NotFoundError('Table not found')
   }
-  return await TableModel.findByIdAndUpdate(Types.ObjectId.createFromHexString(id), { deletedAt: Date.now() })
+  return await TableModel.findByIdAndUpdate(Types.ObjectId.createFromHexString(id), { deleted_at: Date.now() })
 }
-const findTablesByAnyField = async (searchTerm) => {
+const findTablesByAnyField = async (searchTerm, page, size) => {
   const isObjectId = mongoose.Types.ObjectId.isValid(searchTerm)
 
   const query = {
     $or: [
-      ...(isObjectId
-        ? [{ _id: Types.ObjectId.isValid(searchTerm) ? null : Types.ObjectId.createFromHexString(searchTerm) }]
-        : []),
-      { tableNumber: isNaN(searchTerm) ? null : searchTerm },
-      { peopleAmount: isNaN(searchTerm) ? null : searchTerm },
-      { price: isNaN(searchTerm) ? null : searchTerm },
-      { restaurantID: Types.ObjectId.isValid(searchTerm) ? null : Types.ObjectId.createFromHexString(searchTerm) }
+      { _id: isObjectId ? Types.ObjectId.createFromHexString(searchTerm) : null },
+      { number_of_tables: { $regex: searchTerm, $options: 'i' } },
+      { people_per_table: { $regex: searchTerm, $options: 'i' } },
+      { restaurant_id: isObjectId ? Types.ObjectId.createFromHexString(searchTerm) : null }
     ]
   }
 
-  return await TableModel.find(query).lean()
-}
-const getAllTableByFilterAndSort = async (upper, lower, sort, page) => {
-  if (sort === 'new') {
-    return await TableModel.aggregate([
-      {
-        $match: {
-          deletedAt: { $eq: null },
-          $expr: {
-            $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
-            ]
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurantID',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      },
-      {
-        $group: {
-          _id: '$restaurantID',
-          restaurant: { $first: '$restaurant' },
-          name: { $first: '$name' },
-          status: { $first: '$status' },
-          createdAt: { $first: '$createdAt' },
-          updatedAt: { $first: '$updatedAt' },
-          tableNumber: { $first: '$tableNumber' },
-          peopleAmount: { $first: '$peopleAmount' },
-          price: { $first: '$price' }
-        }
-      },
-      {
-        $sort: { createdAt: -1 }
-      },
-      {
-        $project: {
-          _id: 0,
-          restaurantId: '$_id',
-          restaurant: 1,
-          name: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          tableNumber: 1,
-          peopleAmount: 1,
-          price: 1
-        }
-      },
-      {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      }
-    ])
-  } else if (sort === 'old') {
-    return await TableModel.aggregate([
-      {
-        $match: {
-          deletedAt: { $eq: null },
-          $expr: {
-            $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
-            ]
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurantID',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      },
-      {
-        $group: {
-          _id: '$restaurantID',
-          restaurant: { $first: '$restaurant' },
-          name: { $first: '$name' },
-          status: { $first: '$status' },
-          createdAt: { $first: '$createdAt' },
-          updatedAt: { $first: '$updatedAt' },
-          tableNumber: { $first: '$tableNumber' },
-          peopleAmount: { $first: '$peopleAmount' },
-          price: { $first: '$price' }
-        }
-      },
-      {
-        $sort: { createdAt: 1 }
-      },
-      {
-        $project: {
-          _id: 0,
-          restaurantId: '$_id',
-          restaurant: 1,
-          name: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          tableNumber: 1,
-          peopleAmount: 1,
-          price: 1
-        }
-      },
-      {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      }
-    ])
-  } else if (sort === 'A->Z') {
-    return await TableModel.aggregate([
-      {
-        $match: {
-          deletedAt: { $eq: null },
-          $expr: {
-            $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
-            ]
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurantID',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      },
-      {
-        $group: {
-          _id: '$restaurantID',
-          restaurant: { $first: '$restaurant' },
-          name: { $first: '$name' },
-          status: { $first: '$status' },
-          createdAt: { $first: '$createdAt' },
-          updatedAt: { $first: '$updatedAt' },
-          tableNumber: { $first: '$tableNumber' },
-          peopleAmount: { $first: '$peopleAmount' },
-          price: { $first: '$price' }
-        }
-      },
-      {
-        $sort: { 'restaurant.name': 1 }
-      },
-      {
-        $project: {
-          _id: 0,
-          restaurantId: '$_id',
-          restaurant: 1,
-          name: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          tableNumber: 1,
-          peopleAmount: 1,
-          price: 1
-        }
-      },
-      {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      }
-    ])
-  } else if (sort === 'Z->A') {
-    return await TableModel.aggregate([
-      {
-        $match: {
-          deletedAt: { $eq: null },
-          $expr: {
-            $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
-            ]
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurantID',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      },
-      {
-        $group: {
-          _id: '$restaurantID',
-          restaurant: { $first: '$restaurant' },
-          name: { $first: '$name' },
-          status: { $first: '$status' },
-          createdAt: { $first: '$createdAt' },
-          updatedAt: { $first: '$updatedAt' },
-          tableNumber: { $first: '$tableNumber' },
-          peopleAmount: { $first: '$peopleAmount' },
-          price: { $first: '$price' }
-        }
-      },
-      {
-        $sort: { 'restaurant.name': -1 }
-      },
-      {
-        $project: {
-          _id: 0,
-          restaurantId: '$_id',
-          restaurant: 1,
-          name: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          tableNumber: 1,
-          peopleAmount: 1,
-          price: 1
-        }
-      },
-      {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      }
-    ])
-  } else if (sort === 'price-asc') {
-    return await TableModel.aggregate([
-      {
-        $match: {
-          deletedAt: { $eq: null },
-          $expr: {
-            $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
-            ]
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurantID',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      },
-      {
-        $addFields: {
-          pricePerPerson: { $divide: ['$price', '$peopleAmount'] }
-        }
-      },
-      {
-        $group: {
-          _id: '$restaurantID',
-          restaurant: { $first: '$restaurant' },
-          name: { $first: '$name' },
-          status: { $first: '$status' },
-          createdAt: { $first: '$createdAt' },
-          updatedAt: { $first: '$updatedAt' },
-          tableNumber: { $first: '$tableNumber' },
-          peopleAmount: { $first: '$peopleAmount' },
-          price: { $first: '$price' },
-          pricePerPerson: { $first: '$pricePerPerson' }
-        }
-      },
-      {
-        $sort: { pricePerPerson: 1 }
-      },
-      {
-        $project: {
-          _id: 0,
-          restaurantId: '$_id',
-          restaurant: 1,
-          name: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          tableNumber: 1,
-          peopleAmount: 1,
-          price: 1
-        }
-      },
-      {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      }
-    ])
-  } else if (sort === 'price-desc') {
-    return await TableModel.aggregate([
-      {
-        $match: {
-          deletedAt: { $eq: null },
-          $expr: {
-            $and: [
-              { $gte: [{ $divide: ['$price', '$peopleAmount'] }, Number(lower)] },
-              { $lte: [{ $divide: ['$price', '$peopleAmount'] }, Number(upper)] }
-            ]
-          }
-        }
-      },
-      {
-        $lookup: {
-          from: 'restaurants',
-          localField: 'restaurantID',
-          foreignField: '_id',
-          as: 'restaurant'
-        }
-      },
-      {
-        $unwind: '$restaurant'
-      },
-      {
-        $addFields: {
-          pricePerPerson: { $divide: ['$price', '$peopleAmount'] }
-        }
-      },
-      {
-        $group: {
-          _id: '$restaurantID',
-          restaurant: { $first: '$restaurant' },
-          name: { $first: '$name' },
-          status: { $first: '$status' },
-          createdAt: { $first: '$createdAt' },
-          updatedAt: { $first: '$updatedAt' },
-          tableNumber: { $first: '$tableNumber' },
-          peopleAmount: { $first: '$peopleAmount' },
-          price: { $first: '$price' },
-          pricePerPerson: { $first: '$pricePerPerson' }
-        }
-      },
-      {
-        $sort: { pricePerPerson: -1 }
-      },
-      {
-        $project: {
-          _id: 0,
-          restaurantId: '$_id',
-          restaurant: 1,
-          name: 1,
-          status: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          tableNumber: 1,
-          peopleAmount: 1,
-          price: 1
-        }
-      },
-      {
-        $skip: (page - 1) * 8
-      },
-      {
-        $limit: 8
-      }
-    ])
-  }
+  const tables = await TableModel.find(query)
+    .skip((page - 1) * size)
+    .limit(size)
+    .exec()
+  const count = await TableModel.countDocuments(query)
+  return { data: tables, info: { total: count, page, size, number_of_pages: Math.ceil(count / size) } }
 }
 
 export const TableService = {
@@ -554,6 +140,5 @@ export const TableService = {
   createTable,
   updateTable,
   deleteTable,
-  findTablesByAnyField,
-  getAllTableByFilterAndSort
+  findTablesByAnyField
 }

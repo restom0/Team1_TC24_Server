@@ -4,90 +4,65 @@ import { BadRequestError } from '../errors/badRequest.error.js'
 const createMenuItem = async (req, res, next) => {
   try {
     const newItem = await MenuService.createMenuItem(req.body)
-    return new Response(201, 'Menu đã được tạo', newItem).resposeHandler(res)
+    next(new Response(201, 'Menu đã được tạo', newItem).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const getAllMenuItems = async (req, res, next) => {
   try {
-    const items = await MenuService.getAllMenuItems()
-    return new Response(200, 'Thành Công', items).resposeHandler(res)
+    const { page, size } = req.query
+    const items = await MenuService.getAllMenuItems(page, size)
+    next(new Response(200, 'Thành Công', items.data, items.info).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const getMenuItemById = async (req, res, next) => {
   try {
     const item = await MenuService.getMenuItemById(req.params.id)
-    return new Response(200, 'Thành Công', item).resposeHandler(res)
+    next(new Response(200, 'Thành Công', item).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const updateMenuItemById = async (req, res, next) => {
   try {
     const item = await MenuService.updateMenuItemById(req.params.id, req.body)
-    return new Response(200, 'Menu đã được cập nhật', item).resposeHandler(res)
+    next(new Response(200, 'Menu đã được cập nhật', item).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const deleteMenuItemById = async (req, res, next) => {
   try {
     await MenuService.deleteMenuItemById(req.params.id)
-    return new Response(200, 'Menu đã được xóa', null).resposeHandler(res)
+    next(new Response(200, 'Menu đã được xóa', null).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
 const findMenuByAnyField = async (req, res, next) => {
   try {
     const { searchTerm } = req.body
-    if (!searchTerm) {
-      throw new BadRequestError('Giá trị tìm kiếm là bắt buộc')
-    }
-    const result = await MenuService.findMenuItemsByAnyField(searchTerm)
-    if (result.length === 0) {
-      return new Response(404, 'Không tìm thấy bàn', null).resposeHandler(res)
-    }
-    return new Response(200, 'Đã tìm thấy bàn', result).resposeHandler(res)
+    const { page, size } = req.query
+    const result = await MenuService.findMenuItemsByAnyField(searchTerm, page, size)
+    next(new Response(200, 'Đã tìm thấy bàn', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 const countMenu = async (req, res, next) => {
   try {
     const result = await MenuService.countMenu()
-    return new Response(200, 'Thành Công', result).resposeHandler(res)
+    next(new Response(200, 'Thành Công', result).resposeHandler(res))
   } catch (error) {
-    if (!res.headersSent) {
-      return new Response(error.statusCode || 500, error.message, null).resposeHandler(res)
-    }
-    next(error)
+    next(new Response(error.statusCode || 500, error.message, null).resposeHandler(res))
   }
 }
 
